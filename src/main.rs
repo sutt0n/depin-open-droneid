@@ -1,5 +1,32 @@
 use pcap::{Capture, Device};
+use std::process::Command as SysCommand;
 use clap::{Command, Arg};
+
+fn enable_monitor_mode(device: &str) -> Result<(), String> {
+    // Check if the device is already in monitoring mode
+    let check_mode = SysCommand::new("iwconfig")
+        .arg(device)
+        .output()
+        .expect("failed to execute process");
+
+    let output = String::from_utf8_lossy(&check_mode.stdout);
+
+    if !output.contains("Monitor mode enabled") {
+        // Enable monitoring mode using airmon-ng
+        let start_mon = SysCommand::new("sudo")
+            .args(["airmon-ng", "start", device])
+            .output()
+            .expect("failed to execute process");
+
+        if start_mon.status.success() {
+            println!("Monitoring mode enabled on {}", device);
+        } else {
+            return Err("Failed to enable monitoring mode".to_string());
+        }
+    }
+
+    Ok(())
+}
 
 fn main() {
     let matches = Command::new("Drone ID Scanner")
@@ -14,6 +41,11 @@ fn main() {
         .get_matches();
 
     let device_name = matches.get_one::<String>("device").unwrap();
+
+    if let Err(e) = enable_monitor_mode(device_name) {
+        eprintln!("Error: {}", e);
+        return;
+    }
 
     println!("Using device: {}", device_name);
 
