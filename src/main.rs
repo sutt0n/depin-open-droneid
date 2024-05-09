@@ -2,6 +2,12 @@ use pcap::{Capture, Device};
 use std::process::Command as SysCommand;
 use clap::{Command, Arg};
 
+mod messages;
+mod parsers;
+
+use crate::messages::RemoteIdMessage;
+use crate::parsers::{parse_basic_id, parse_location, parse_authentication};
+
 fn enable_monitor_mode(device: &str) -> Result<(), String> {
     // Check if the device is already in monitoring mode
     let check_mode = SysCommand::new("iwconfig")
@@ -80,7 +86,17 @@ fn main() {
     }
 
     while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
-        println!("received packet: {:?}", packet);
+        let data = packet.data;
+        let message_type = data[0];  // assuming the first byte indicates the type
+
+        let message = match message_type {
+            0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
+            1 => RemoteIdMessage::Location(parse_location(data)),
+            2 => RemoteIdMessage::Authentication(parse_authentication(data)),
+            _ => RemoteIdMessage::Unknown,
+        };
+
+        println!("Received packet: {:?}", message);
     }
 
     println!("Exiting...");
