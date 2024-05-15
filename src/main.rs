@@ -72,7 +72,6 @@ fn main() {
     println!("Using device: {}", device_name);
 
     let mut cap = Capture::from_device(device_name.as_str()).unwrap()
-        .promisc(true)
         .snaplen(5000)
         .open();
 
