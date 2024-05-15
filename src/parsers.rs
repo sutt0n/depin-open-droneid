@@ -43,17 +43,17 @@ pub fn parse_location(data: &[u8]) -> Location {
         direction: data[2] as u16,
         speed: data[3] as u16,
         // Latitude of UA deg*10^7 Int signed (LE) 
-        latitude: LittleEndian::read_f32(&data[4..8]),
+        latitude: LittleEndian::read_f32(&data[5..9]),
         // Longitude of UA deg*10^7 Int signed (LE)
-        longitude: LittleEndian::read_f32(&data[8..12]),
-        altitude_pressure: LittleEndian::read_i16(&data[12..14]),
-        altitude_geodetic: LittleEndian::read_i16(&data[14..16]),
-        height: LittleEndian::read_i16(&data[16..18]),
-        horizontal_accuracy: data[19],
-        vertical_accuracy: data[20],
-        barometric_pressure_accuracy: data[21],
-        speed_accuracy: data[22],
-        timestamp: LittleEndian::read_u24(&data[23..25]),
+        longitude: LittleEndian::read_f32(&data[9..13]),
+        altitude_pressure: LittleEndian::read_i16(&data[13..15]),
+        altitude_geodetic: LittleEndian::read_i16(&data[15..17]),
+        height: LittleEndian::read_i16(&data[17..19]),
+        horizontal_accuracy: data[20] & 0xF0 >> 4,
+        vertical_accuracy: data[20] & 0x0F,
+        barometric_pressure_accuracy: data[21] & 0xF0 >> 4,
+        speed_accuracy: data[21] & 0x0F,
+        timestamp: LittleEndian::read_u24(&data[22..24]),
     }
 }
 
