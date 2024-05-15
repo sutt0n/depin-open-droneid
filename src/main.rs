@@ -73,7 +73,7 @@ fn main() {
 
     let cap = Capture::from_device(device_name.as_str())
         .unwrap() // Handle this more gracefully in real applications
-        .promisc(true)
+        .immediate_mode(true)
         .open()
         .unwrap(); // This should be handled more gracefully, such as with a match statement
 
