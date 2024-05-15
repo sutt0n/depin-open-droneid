@@ -64,15 +64,15 @@ fn main() {
 
     let device_name = matches.get_one::<String>("device").unwrap();
 
-    // if let Err(e) = enable_monitor_mode(device_name) {
-    //     eprintln!("Error: {}", e);
-    //     return;
-    // }
+    if let Err(e) = enable_monitor_mode(device_name) {
+        eprintln!("Error: {}", e);
+        return;
+    }
 
     println!("Using device: {}", device_name);
 
     let mut cap = Capture::from_device(device_name.as_str()).unwrap()
-        .rfmon(true)
+        .immediate_mode(true)
         .open();
 
     if let Err(e) = cap {
@@ -84,11 +84,11 @@ fn main() {
         return;
     }
 
-    while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
+    cap.unwrap().for_each(None, |packet| {
         let data = packet.data;
+        let header = packet.header;
 
-        println!("Received packet with {} bytes", data.len());
-        println!("Data: {:?}", data);
+        println!("Received packet with header {:?}", header);
 
         // packet bytes are in little-endian order
         let data = data.iter().enumerate().map(|(i, &b)| {
@@ -98,7 +98,7 @@ fn main() {
                 b.rotate_left(4)
             }
         }).collect::<Vec<u8>>();
-        
+
         let data = &data[..];
 
         // header is 1 byte
@@ -108,16 +108,41 @@ fn main() {
         let protocol_version = data[0] & 0x0F;
 
         println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
+    }).unwrap();
 
-        let message = match message_type {
-            0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
-            1 => RemoteIdMessage::Location(parse_location(data)),
-            2 => RemoteIdMessage::Authentication(parse_authentication(data)),
-            _ => RemoteIdMessage::Unknown,
-        };
-
-        println!("Received packet: {:?}", message);
-    }
+    // while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
+    //     let data = packet.data;
+    //     let header = packet.header;
+    //
+    //
+    //     // packet bytes are in little-endian order
+    //     let data = data.iter().enumerate().map(|(i, &b)| {
+    //         if i % 2 == 0 {
+    //             b
+    //         } else {
+    //             b.rotate_left(4)
+    //         }
+    //     }).collect::<Vec<u8>>();
+    //     
+    //     let data = &data[..];
+    //
+    //     // header is 1 byte
+    //     // bits 7..4 are the message type 
+    //     // bytes 3..0 are the protocol version
+    //     let message_type = data[0] >> 4;
+    //     let protocol_version = data[0] & 0x0F;
+    //
+    //     println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
+    //
+    //     let message = match message_type {
+    //         0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
+    //         1 => RemoteIdMessage::Location(parse_location(data)),
+    //         2 => RemoteIdMessage::Authentication(parse_authentication(data)),
+    //         _ => RemoteIdMessage::Unknown,
+    //     };
+    //
+    //     println!("Received packet: {:?}", message);
+    // }
 
     println!("Exiting...");
 
