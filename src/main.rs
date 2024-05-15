@@ -6,7 +6,7 @@ use tokio::time::Duration;
 mod parsers;
 mod messages;
 
-use crate::parsers::parse_basic_id;
+use crate::parsers::{parse_basic_id, parse_location};
 
 #[tokio::main]
 async fn main() {
@@ -58,6 +58,11 @@ async fn main() {
                         let basic_id = parse_basic_id(data);
 
                         println!("Basic ID: {:?}", basic_id);
+                    }
+                    0x1 => {
+                        let location = parse_location(data);
+
+                        println!("Location: {:?}", location);
                     }
                     _ => {
                         println!("Unknown message type");
