@@ -86,9 +86,6 @@ fn main() {
 
     cap.unwrap().for_each(None, |packet| {
         let data = packet.data;
-        let header = packet.header;
-
-        println!("Received packet with header {:?}", header);
 
         // packet bytes are in little-endian order
         let data = data.iter().enumerate().map(|(i, &b)| {
@@ -108,6 +105,15 @@ fn main() {
         let protocol_version = data[0] & 0x0F;
 
         println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
+
+        let message = match message_type {
+            0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
+            1 => RemoteIdMessage::Location(parse_location(data)),
+            2 => RemoteIdMessage::Authentication(parse_authentication(data)),
+            _ => RemoteIdMessage::Unknown,
+        };
+
+        println!("Received packet: {:?}", message);
     }).unwrap();
 
     // while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
