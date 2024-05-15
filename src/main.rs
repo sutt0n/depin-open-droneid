@@ -34,6 +34,12 @@ async fn main() {
                 let peripheral = central.peripheral(&id).await.unwrap();
                 let address = peripheral.address();
                 println!("Manufacturer data from {:?}: {:?}", address, manufacturer_data);
+                // manufacturer_data to readable bytes
+                // get the firs tvalue of the manufacturer data hashmap
+                let manufacturer_data = manufacturer_data.values().next().unwrap();
+                let data = manufacturer_data.to_vec();
+                let data = &data[2..];
+                println!("Data: {:?}", data);
             }
             _ => {}
         }
