@@ -59,14 +59,14 @@ async fn main() {
 
                 match data[0] {
                     0x0 => {
-                        let basic_id = parse_basic_id(data);
-
-                        println!("Basic ID: {:?}", basic_id);
+                        // let basic_id = parse_basic_id(data);
+                        //
+                        // println!("Basic ID: {:?}", basic_id);
                     }
                     0x1 => {
-                        let location = parse_location(data);
+                        // let location = parse_location(data);
 
-                        println!("Location: {:?}", location);
+                        // println!("Location: {:?}", location);
                     }
                     _ => {
                         println!("Unknown message type");
