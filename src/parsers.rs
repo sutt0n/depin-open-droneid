@@ -1,5 +1,5 @@
 use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType};
-use byteorder::{ByteOrder, LittleEndian};
+use byteorder::{ByteOrder, LittleEndian, BigEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
     let id_type = (data[1] & 0xF0) >> 4;
@@ -41,7 +41,7 @@ pub fn parse_location(data: &[u8]) -> Location {
         status: data[0],
         direction: LittleEndian::read_u16(&data[1..3]),
         speed: LittleEndian::read_u16(&data[3..5]),
-        latitude: LittleEndian::read_f32(&data[5..9]),
+        latitude: BigEndian::read_f32(&data[5..9]),
         longitude: LittleEndian::read_f32(&data[9..13]),
         altitude_pressure: LittleEndian::read_i16(&data[13..15]),
         altitude_geodetic: LittleEndian::read_i16(&data[15..17]),
