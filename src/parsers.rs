@@ -42,9 +42,9 @@ pub fn parse_location(data: &[u8]) -> Location {
         direction: LittleEndian::read_u16(&data[2..4]),
         speed: LittleEndian::read_u16(&data[4..6]),
         // Latitude of UA deg*10^7 Int signed (LE) 
-        latitude: LittleEndian::read_f32(&data[6..10]),
+        latitude: LittleEndian::read_f32(&data[6..10]) * 1e-7,
         // Longitude of UA deg*10^7 Int signed (LE)
-        longitude: LittleEndian::read_f32(&data[10..14]),
+        longitude: LittleEndian::read_f32(&data[10..14]) * 1e-7,
         altitude_pressure: LittleEndian::read_i16(&data[14..16]),
         altitude_geodetic: LittleEndian::read_i16(&data[16..18]),
         height: LittleEndian::read_i16(&data[18..20]),
