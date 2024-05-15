@@ -52,6 +52,8 @@ async fn main() {
                     continue;
                 }
 
+                println!("Lossy string: {:?}", String::from_utf8_lossy(data));
+
                 // if the first byte is 0x01, it's a basic ID message
                 //
 
