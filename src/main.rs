@@ -43,7 +43,7 @@ async fn main() {
                 // get the firs tvalue of the manufacturer data hashmap
                 let manufacturer_data = manufacturer_data.values().next().unwrap();
                 let data = manufacturer_data.to_vec();
-                let data = &data[2..];
+                let data = data.as_slice();
 
                 // make sure the data is long enough to be a Remote ID message
                 if data.len() < 25 {
