@@ -10,26 +10,26 @@ use crate::parsers::{parse_basic_id, parse_location, parse_authentication};
 
 fn enable_monitor_mode(device: &str) -> Result<(), String> {
     // Check if the device is already in monitoring mode
-    // let check_mode = SysCommand::new("iwconfig")
-    //     .arg(device)
-    //     .output()
-    //     .expect("failed to execute process");
-    //
-    // let output = String::from_utf8_lossy(&check_mode.stdout);
-    //
-    // if !output.contains("Monitor mode enabled") {
-    //     // Enable monitoring mode using airmon-ng
-    //     let start_mon = SysCommand::new("sudo")
-    //         .args(["airmon-ng", "start", device])
-    //         .output()
-    //         .expect("failed to execute process");
-    //
-    //     if start_mon.status.success() {
-    //         println!("Monitoring mode enabled on {}", device);
-    //     } else {
-    //         return Err("Failed to enable monitoring mode".to_string());
-    //     }
-    // }
+    let check_mode = SysCommand::new("iwconfig")
+        .arg(device)
+        .output()
+        .expect("failed to execute process");
+
+    let output = String::from_utf8_lossy(&check_mode.stdout);
+
+    if !output.contains("Monitor mode enabled") {
+        // Enable monitoring mode using airmon-ng
+        let start_mon = SysCommand::new("sudo")
+            .args(["airmon-ng", "start", device])
+            .output()
+            .expect("failed to execute process");
+
+        if start_mon.status.success() {
+            println!("Monitoring mode enabled on {}", device);
+        } else {
+            return Err("Failed to enable monitoring mode".to_string());
+        }
+    }
 
     Ok(())
 }
