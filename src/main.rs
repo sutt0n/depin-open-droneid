@@ -88,6 +88,9 @@ fn main() {
     while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
         let data = packet.data;
 
+        println!("Received packet with {} bytes", data.len());
+        println!("Data: {:?}", data);
+
         // packet bytes are in little-endian order
         let data = data.iter().enumerate().map(|(i, &b)| {
             if i % 2 == 0 {
