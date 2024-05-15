@@ -3,6 +3,10 @@ use btleplug::platform::Manager;
 use futures::stream::StreamExt;
 use tokio::time::Duration;
 
+mod parsers;
+
+use crate::parsers::parse_basic_id;
+
 #[tokio::main]
 async fn main() {
     // Create a new manager
@@ -39,7 +43,11 @@ async fn main() {
                 let manufacturer_data = manufacturer_data.values().next().unwrap();
                 let data = manufacturer_data.to_vec();
                 let data = &data[2..];
-                println!("Data: {:?}", data);
+                
+                // parse the data bytes into a readable format
+                let basic_id = parse_basic_id(data);
+
+                println!("Basic ID: {:?}", basic_id);
             }
             _ => {}
         }
