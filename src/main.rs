@@ -64,10 +64,10 @@ fn main() {
 
     let device_name = matches.get_one::<String>("device").unwrap();
 
-    // if let Err(e) = enable_monitor_mode(device_name) {
-    //     eprintln!("Error: {}", e);
-    //     return;
-    // }
+    if let Err(e) = enable_monitor_mode(device_name) {
+        eprintln!("Error: {}", e);
+        return;
+    }
 
     println!("Using device: {}", device_name);
 
