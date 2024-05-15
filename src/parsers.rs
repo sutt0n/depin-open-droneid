@@ -1,14 +1,40 @@
-use crate::messages::{BasicId, Location, Authentication, UasIdType};
+use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType};
 use byteorder::{ByteOrder, LittleEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
+    // offset byte 1, length 1 byte is id type, ua type
+    // offset byte 2, length 20 bytes is uas id
+
+    
+    let id_type = (data[0] & 0xF0) >> 4;
+    let ua_type = data[0] & 0x0F;
+    let uas_id = data[1..21].to_vec();
+
     BasicId {
-        uas_id_type: match data[0] {
+        uas_id_type: match id_type {
             0 => UasIdType::SerialNumber,
             1 => UasIdType::CaaRegistration,
-            _ => UasIdType::Other(data[0]),
+            _ => UasIdType::Other(id_type),
         },
-        uas_id: String::from_utf8_lossy(&data[1..21]).to_string(),
+        ua_type: match ua_type {
+            0 => UaType::Undeclared,
+            1 => UaType::Aeroplane,
+            2 => UaType::Helicopter,
+            3 => UaType::Gyroplane,
+            4 => UaType::HybridLift,
+            5 => UaType::Ornithopter,
+            6 => UaType::Glider,
+            7 => UaType::Kite,
+            8 => UaType::FreeBalloon,
+            9 => UaType::CaptiveBalloon,
+            10 => UaType::Airship,
+            11 => UaType::FreeFallParachute,
+            12 => UaType::Rocket,
+            13 => UaType::TetheredAircraft,
+            14 => UaType::GroundObstacle,
+            _ => UaType::Other(ua_type),
+        },
+        uas_id: String::from_utf8_lossy(&uas_id).to_string(),
     }
 }
 

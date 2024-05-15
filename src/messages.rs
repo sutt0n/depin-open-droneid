@@ -6,8 +6,29 @@ pub enum UasIdType {
 }
 
 #[derive(Debug)]
+pub enum UaType {
+    Undeclared,
+    Aeroplane,
+    Helicopter,
+    Gyroplane,
+    HybridLift,
+    Ornithopter,
+    Glider,
+    Kite,
+    FreeBalloon,
+    CaptiveBalloon,
+    Airship,
+    FreeFallParachute,
+    Rocket,
+    TetheredAircraft,
+    GroundObstacle,
+    Other(u8),
+}
+
+#[derive(Debug)]
 pub struct BasicId {
     pub uas_id_type: UasIdType,
+    pub ua_type: UaType,
     pub uas_id: String,  // Assuming UTF-8 encoding; adjust based on actual spec
 }
 
