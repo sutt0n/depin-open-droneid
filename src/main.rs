@@ -84,10 +84,12 @@ fn main() {
         return;
     }
 
-    cap.as_mut().unwrap().filter("type mgt subtype beacon", false).unwrap();
+    // cap.as_mut().unwrap().filter("type mgt subtype beacon", true).unwrap();
 
     cap.unwrap().for_each(None, |packet| {
         let data = packet.data;
+
+        println!("Received packet with {:?} bytes", &packet.data[..std::cmp::min(50, packet.data.len())]);
 
         // packet bytes are in little-endian order
         // let data = data.iter().enumerate().map(|(i, &b)| {
