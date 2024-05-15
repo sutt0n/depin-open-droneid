@@ -38,19 +38,19 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
 
 pub fn parse_location(data: &[u8]) -> Location {
     Location {
-        status: data[0],
-        direction: LittleEndian::read_u16(&data[1..3]),
-        speed: LittleEndian::read_u16(&data[3..5]),
-        latitude: BigEndian::read_f32(&data[5..9]),
-        longitude: LittleEndian::read_f32(&data[9..13]),
-        altitude_pressure: LittleEndian::read_i16(&data[13..15]),
-        altitude_geodetic: LittleEndian::read_i16(&data[15..17]),
-        height: LittleEndian::read_i16(&data[17..19]),
-        horizontal_accuracy: data[19],
-        vertical_accuracy: data[20],
-        barometric_pressure_accuracy: data[21],
-        speed_accuracy: data[22],
-        timestamp: LittleEndian::read_u24(&data[23..26]),
+        status: data[1],
+        direction: LittleEndian::read_u16(&data[2..4]),
+        speed: LittleEndian::read_u16(&data[4..6]),
+        latitude: BigEndian::read_f32(&data[6..10]),
+        longitude: LittleEndian::read_f32(&data[10..14]),
+        altitude_pressure: LittleEndian::read_i16(&data[14..16]),
+        altitude_geodetic: LittleEndian::read_i16(&data[16..18]),
+        height: LittleEndian::read_i16(&data[18..20]),
+        horizontal_accuracy: data[20],
+        vertical_accuracy: data[21],
+        barometric_pressure_accuracy: data[22],
+        speed_accuracy: data[23],
+        timestamp: LittleEndian::read_u24(&data[24..27]),
     }
 }
 
