@@ -88,15 +88,15 @@ fn main() {
         let data = packet.data;
 
         // packet bytes are in little-endian order
-        let data = data.iter().enumerate().map(|(i, &b)| {
-            if i % 2 == 0 {
-                b
-            } else {
-                b.rotate_left(4)
-            }
-        }).collect::<Vec<u8>>();
-
-        let data = &data[..];
+        // let data = data.iter().enumerate().map(|(i, &b)| {
+        //     if i % 2 == 0 {
+        //         b
+        //     } else {
+        //         b.rotate_left(4)
+        //     }
+        // }).collect::<Vec<u8>>();
+        //
+        // let data = &data[..];
 
         // header is 1 byte
         // bits 7..4 are the message type 
