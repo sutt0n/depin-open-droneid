@@ -45,6 +45,8 @@ async fn main() {
                 let data = manufacturer_data.to_vec();
                 let data = data.as_slice();
 
+                println!("Data length: {}", data.len());
+
                 // make sure the data is long enough to be a Remote ID message
                 if data.len() < 25 {
                     continue;
