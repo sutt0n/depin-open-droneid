@@ -1,12 +1,17 @@
 use btleplug::api::{Central, Manager as _, Peripheral, ScanFilter};
 use btleplug::platform::Manager;
 use futures::stream::StreamExt;
+use serde::Serialize;
+use std::collections::HashMap;
 use tokio::time::Duration;
 
-mod parsers;
-mod messages;
-
-use crate::parsers::{parse_basic_id, parse_location};
+#[derive(Serialize)]
+struct DeviceProperties {
+    local_name: Option<String>,
+    rssi: Option<i16>,
+    address: String,
+    manufacturer_data: HashMap<u16, Vec<u8>>,
+}
 
 #[tokio::main]
 async fn main() {
@@ -25,55 +30,20 @@ async fn main() {
     let mut events = central.events().await.unwrap();
     while let Some(event) = events.next().await {
         match event {
-            btleplug::api::CentralEvent::DeviceDiscovered(id) => {
+            btleplug::api::CentralEvent::DeviceDiscovered(id) | 
+            btleplug::api::CentralEvent::ManufacturerDataAdvertisement { id, .. } => {
                 let peripheral = central.peripheral(&id).await.unwrap();
                 let properties = peripheral.properties().await.unwrap();
                 if let Some(properties) = properties {
-                    println!(
-                        "Discovered device: {:?}, RSSI: {:?}, Address: {:?}",
-                        properties.local_name, properties.rssi, peripheral.address()
-                    );
+                    let device_props = DeviceProperties {
+                        local_name: properties.local_name,
+                        rssi: properties.rssi,
+                        address: peripheral.address().to_string(),
+                        manufacturer_data: properties.manufacturer_data,
+                    };
+                    let json = serde_json::to_string(&device_props).unwrap();
+                    println!("{}", json);
                 }
-            }
-            btleplug::api::CentralEvent::ManufacturerDataAdvertisement { id, manufacturer_data } => {
-                let peripheral = central.peripheral(&id).await.unwrap();
-                let address = peripheral.address();
-                println!("Manufacturer data from {:?}: {:?}", address, manufacturer_data);
-                // manufacturer_data to readable bytes
-                // get the firs tvalue of the manufacturer data hashmap
-                let manufacturer_data = manufacturer_data.values().next().unwrap();
-                let data = manufacturer_data.to_vec();
-                let data = data.as_slice();
-
-                println!("Data length: {}", data.len());
-
-                // make sure the data is long enough to be a Remote ID message
-                if data.len() < 24 {
-                    continue;
-                }
-
-                println!("Lossy string: {:?}", String::from_utf8_lossy(data));
-
-                // if the first byte is 0x01, it's a basic ID message
-                //
-
-                match data[0] {
-                    0x0 => {
-                        // let basic_id = parse_basic_id(data);
-                        //
-                        // println!("Basic ID: {:?}", basic_id);
-                    }
-                    0x1 => {
-                        // let location = parse_location(data);
-
-                        // println!("Location: {:?}", location);
-                    }
-                    _ => {
-                        println!("Unknown message type");
-                    }
-                }
-                
-                // parse the data bytes into a readable format
             }
             _ => {}
         }
