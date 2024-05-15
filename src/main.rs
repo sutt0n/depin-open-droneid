@@ -87,7 +87,25 @@ fn main() {
 
     while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
         let data = packet.data;
-        let message_type = data[0];  // assuming the first byte indicates the type
+
+        // packet bytes are in little-endian order
+        let data = data.iter().enumerate().map(|(i, &b)| {
+            if i % 2 == 0 {
+                b
+            } else {
+                b.rotate_left(4)
+            }
+        }).collect::<Vec<u8>>();
+        
+        let data = &data[..];
+
+        // header is 1 byte
+        // bits 7..4 are the message type 
+        // bytes 3..0 are the protocol version
+        let message_type = data[0] >> 4;
+        let protocol_version = data[0] & 0x0F;
+
+        println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
 
         let message = match message_type {
             0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
