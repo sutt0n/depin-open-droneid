@@ -1,4 +1,4 @@
-use pcap::{Capture, Device};
+use pcap::{Capture, Device, Error};
 use std::process::Command as SysCommand;
 use clap::{Command, Arg};
 
@@ -71,54 +71,26 @@ fn main() {
 
     println!("Using device: {}", device_name);
 
-    let mut cap = Capture::from_device(device_name.as_str()).unwrap()
+    let cap = Capture::from_device(device_name.as_str())
+        .unwrap() // Handle this more gracefully in real applications
         .promisc(true)
-        .open();
+        .open()
+        .unwrap(); // This should be handled more gracefully, such as with a match statement
 
-    if let Err(e) = cap {
-        eprintln!("error opening device \"{}\": {}", device_name, e);
-        let devices = Device::list().unwrap();
-        let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
+    let mut cap = cap.setnonblock().expect("Failed to set non-blocking mode");
 
-        eprintln!("available devices: {:?}", device_names);
-        return;
+    loop {
+        match cap.next_packet() {
+            Ok(packet) => {
+                parse_basic_id(packet.data);
+            },
+            Err(Error::TimeoutExpired) => continue, // Continue on timeout expired
+            Err(e) => {
+                eprintln!("Error receiving packet: {:?}", e);
+                break;
+            }
+        }
     }
-
-    // cap.as_mut().unwrap().filter("type mgt subtype beacon", true).unwrap();
-
-    cap.unwrap().for_each(None, |packet| {
-        let data = packet.data;
-
-        println!("Received packet with {:?} bytes", &packet.data[..std::cmp::min(50, packet.data.len())]);
-
-        // packet bytes are in little-endian order
-        // let data = data.iter().enumerate().map(|(i, &b)| {
-        //     if i % 2 == 0 {
-        //         b
-        //     } else {
-        //         b.rotate_left(4)
-        //     }
-        // }).collect::<Vec<u8>>();
-        //
-        // let data = &data[..];
-
-        // header is 1 byte
-        // bits 7..4 are the message type 
-        // bytes 3..0 are the protocol version
-        let message_type = data[0] >> 4;
-        let protocol_version = data[0] & 0x0F;
-
-        println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
-
-        let message = match message_type {
-            0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
-            1 => RemoteIdMessage::Location(parse_location(data)),
-            2 => RemoteIdMessage::Authentication(parse_authentication(data)),
-            _ => RemoteIdMessage::Unknown,
-        };
-
-        println!("Received packet: {:?}", message);
-    }).unwrap();
 
     // while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
     //     let data = packet.data;
