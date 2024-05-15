@@ -72,7 +72,7 @@ fn main() {
     println!("Using device: {}", device_name);
 
     let mut cap = Capture::from_device(device_name.as_str()).unwrap()
-        .immediate_mode(true)
+        .promisc(true)
         .open();
 
     if let Err(e) = cap {
@@ -83,6 +83,8 @@ fn main() {
         eprintln!("available devices: {:?}", device_names);
         return;
     }
+
+    cap.as_mut().unwrap().filter("type mgt subtype beacon", false).unwrap();
 
     cap.unwrap().for_each(None, |packet| {
         let data = packet.data;
