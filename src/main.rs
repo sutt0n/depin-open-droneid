@@ -44,11 +44,27 @@ async fn main() {
                 let manufacturer_data = manufacturer_data.values().next().unwrap();
                 let data = manufacturer_data.to_vec();
                 let data = &data[2..];
+
+                // make sure the data is long enough to be a Remote ID message
+                if data.len() < 2 {
+                    continue;
+                }
+
+                // if the first byte is 0x01, it's a basic ID message
+                //
+
+                match data[0] {
+                    0x0 => {
+                        let basic_id = parse_basic_id(data);
+
+                        println!("Basic ID: {:?}", basic_id);
+                    }
+                    _ => {
+                        println!("Unknown message type");
+                    }
+                }
                 
                 // parse the data bytes into a readable format
-                let basic_id = parse_basic_id(data);
-
-                println!("Basic ID: {:?}", basic_id);
             }
             _ => {}
         }
