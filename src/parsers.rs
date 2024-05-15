@@ -2,17 +2,11 @@ use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType};
 use byteorder::{ByteOrder, LittleEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
-    if data.len() < 21 {
-        return BasicId {
-            uas_id_type: UasIdType::Other(0),
-            ua_type: UaType::Other(0),
-            uas_id: String::new(),
-        };
-    }
-
     let id_type = (data[1] & 0xF0) >> 4;
     let ua_type = data[1] & 0x0F;
-    let uas_id = data[2..21].to_vec();
+
+    // offset 2, length 20
+    let uas_id = data[2..22].to_vec();
 
     BasicId {
         uas_id_type: match id_type {

@@ -46,7 +46,7 @@ async fn main() {
                 let data = &data[2..];
 
                 // make sure the data is long enough to be a Remote ID message
-                if data.len() < 3 {
+                if data.len() < 25 {
                     continue;
                 }
 
