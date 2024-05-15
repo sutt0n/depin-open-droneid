@@ -108,6 +108,18 @@ fn main() {
         let message_type = data[0] >> 4;
         let protocol_version = data[0] & 0x0F;
 
+        if data.len() > 20 { // Ensure there's enough data to parse
+        let id_type = data[0] >> 4; // First 4 bits of the first byte
+        let ua_type = data[0] & 0x0F; // Last 4 bits of the first byte
+        let uas_id = &data[1..21]; // Assuming UAS ID is 20 bytes long
+
+        if let Ok(uas_id_str) = std::str::from_utf8(uas_id) {
+            println!("Basic ID - ID Type: {}, UA Type: {}, UAS ID: {}", id_type, ua_type, uas_id_str);
+        } else {
+            println!("Failed to parse UAS ID");
+        }
+    }
+
         println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
 
         let message = match message_type {
