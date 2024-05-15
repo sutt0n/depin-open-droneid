@@ -64,16 +64,16 @@ fn main() {
 
     let device_name = matches.get_one::<String>("device").unwrap();
 
-    if let Err(e) = enable_monitor_mode(device_name) {
-        eprintln!("Error: {}", e);
-        return;
-    }
+    // if let Err(e) = enable_monitor_mode(device_name) {
+    //     eprintln!("Error: {}", e);
+    //     return;
+    // }
 
     println!("Using device: {}", device_name);
 
     let mut cap = Capture::from_device(device_name.as_str()).unwrap()
         .immediate_mode(true)
-        // .rfmon(true)
+        .rfmon(true)
         // .snaplen(5000)
         .open();
 
