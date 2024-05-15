@@ -4,6 +4,7 @@ use futures::stream::StreamExt;
 use tokio::time::Duration;
 
 mod parsers;
+mod messages;
 
 use crate::parsers::parse_basic_id;
 
