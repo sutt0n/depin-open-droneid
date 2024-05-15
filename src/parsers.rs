@@ -41,7 +41,7 @@ pub fn parse_location(data: &[u8]) -> Location {
         status: data[1],
         direction: LittleEndian::read_u16(&data[2..4]),
         speed: LittleEndian::read_u16(&data[4..6]),
-        latitude: BigEndian::read_f32(&data[6..10]),
+        latitude: LittleEndian::read_f32(&data[6..10]),
         longitude: LittleEndian::read_f32(&data[10..14]),
         altitude_pressure: LittleEndian::read_i16(&data[14..16]),
         altitude_geodetic: LittleEndian::read_i16(&data[16..18]),
