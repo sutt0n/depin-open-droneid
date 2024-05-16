@@ -1035,6 +1035,7 @@ dependencies = [
 name = "trebuchet-rs"
 version = "0.1.0"
 dependencies = [
+ "bluez-async",
  "btleplug",
  "byteorder",
  "clap",
