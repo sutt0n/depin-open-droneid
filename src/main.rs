@@ -12,6 +12,7 @@ async fn main() -> Result<(), eyre::Report> {
     session
         .start_discovery_with_filter(&DiscoveryFilter {
             duplicate_data: Some(true),
+            discoverable: Some(true),
             ..DiscoveryFilter::default()
         })
         .await?;
