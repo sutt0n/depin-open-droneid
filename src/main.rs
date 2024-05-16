@@ -49,6 +49,8 @@ async fn main() {
                     } else {
                         None
                     };
+
+                    println!("Service Data: {:?}", properties.service_data);
                     let device_props = DeviceProperties {
                         local_name: properties.local_name,
                         rssi: properties.rssi,
