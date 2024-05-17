@@ -3,6 +3,11 @@
 use bluez_async::{BluetoothSession, DiscoveryFilter};
 use futures::stream::StreamExt;
 
+mod parsers;
+mod messages;
+
+use crate::parsers::parse_basic_id;
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
@@ -38,6 +43,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
                             println!("Service Data: {} {:?} {:?}", id, data, data_str);
+
+                            match data[0] {
+                                0x01 => {
+                                    // parse basic id
+                                    let basic_id = parsers::parse_basic_id(data);
+                                    println!("Basic ID: {:?}", basic_id);
+                                }
+                                0x02 => {
+                                    // parse location
+                                    // let location = parsers::parse_location(data);
+                                    // println!("Location: {:?}", location);
+                                }
+                                0x03 => {
+                                    // parse authentication
+                                    // let authentication = parsers::parse_authentication(data);
+                                    // println!("Authentication: {:?}", authentication);
+                                }
+                                _ => {}
+                            }
 
                         }
 
