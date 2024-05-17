@@ -42,8 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                         _ => {}
                     }
                 }
-                bluez_async::BluetoothEvent::Adapter { id, event } => todo!(),
-                bluez_async::BluetoothEvent::Characteristic { id, event } => todo!(), }
+                bluez_async::BluetoothEvent::Adapter { id, event } => {},
+                bluez_async::BluetoothEvent::Characteristic { id, event } => {}, }
         }
     }).await?;
 
