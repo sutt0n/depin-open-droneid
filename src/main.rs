@@ -42,7 +42,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
-                            println!("Service Data: {} {:?} {:?}", id, data, data_str);
+                            println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
 
                             match data[0] {
                                 0x01 => {
