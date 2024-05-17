@@ -6,7 +6,10 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
     let ua_type = data[0] & 0x0F;
 
     // offset 1 -> length
-    let uas_id = data[1..data.len() - 1].to_vec();
+    let uas_id = &data[1..data.len() - 1];
+
+    // remove null bytes from uas_id
+    let uas_id = uas_id.iter().cloned().filter(|&x| x != 0).collect::<Vec<u8>>();
 
     BasicId {
         uas_id_type: match id_type {
