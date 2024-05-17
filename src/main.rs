@@ -24,7 +24,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         while let Some(event) = events.next().await {
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
-                    println!("Device: {:?} {:?}",id,event);
                     match event {
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
                             // get first value of service data
