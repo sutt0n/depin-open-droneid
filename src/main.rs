@@ -45,8 +45,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
 
                             let header = data[0];
-                            let message_type = (data[0] & 0xF0) >> 4;
-                            let protocol_version = data[0] & 0x0F;
+
+                            // convert header to little endian
+                            let header = header.to_le_bytes();
+                            let message_type = (header[0] & 0xF0) >> 4;
+                            let protocol_version = header[1] & 0x0F;
+
 
                             println!("Header: {:?} {:?} {:?}", header, message_type, protocol_version);
 
