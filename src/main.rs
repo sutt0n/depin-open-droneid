@@ -25,6 +25,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
                     match event {
+                        bluez_async::DeviceEvent::ManufacturerData { manufacturer_data } => {
+                            // get first value of manufacturer data
+                            let first_value = manufacturer_data.values().next().unwrap();
+                            // to &[u8]
+                            let data = first_value.as_slice();
+
+                            if data.len() < 24 {
+                                continue;
+                            }
+
+                            // to lossy string
+                            let data_str = String::from_utf8_lossy(data);
+                            println!("Manufacturer Data: {:?} {:?}", data, data_str);
+                        },
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
                             // get first value of service data
                             let first_value = service_data.values().next().unwrap();
@@ -40,6 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             println!("Service Data: {:?} {:?}", data, data_str);
 
                         }
+
                         _ => {}
                     }
                 }
