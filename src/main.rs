@@ -31,13 +31,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             // to &[u8]
                             let data = first_value.as_slice();
 
-                            if data.len() < 24 {
+                            if data.len() < 20 {
                                 continue;
                             }
 
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
-                            println!("Service Data: {:?} {:?}", data, data_str);
+                            println!("Service Data: {} {:?} {:?}", id, data, data_str);
 
                         }
 
@@ -46,12 +46,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 }
                 bluez_async::BluetoothEvent::Adapter { id, event } => {},
                 bluez_async::BluetoothEvent::Characteristic { id, event } => {
-                    match event {
-                        bluez_async::CharacteristicEvent::Value { value } => {
-                            println!("Characteristic Value: {:?}", value);
-                        }
-                        _ => {}
-                    }
                 }, }
         }
     }).await?;
