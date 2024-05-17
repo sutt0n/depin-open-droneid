@@ -37,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
-                            println!("Manufacturer Data: {:?} {:?}", data, data_str);
+                            println!("Manufacturer Data: {}, {:?} {:?}", id, data, data_str);
                         },
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
                             // get first value of service data
