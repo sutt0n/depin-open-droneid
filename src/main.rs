@@ -35,7 +35,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                 continue;
                             }
 
-                            println!("Service Data: {:?}", service_data);
+                            // to lossy string
+                            let data_str = String::from_utf8_lossy(data);
+                            println!("Service Data: {:?} {:?}", data, data_str);
 
                         }
                         _ => {}
