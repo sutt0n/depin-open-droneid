@@ -44,32 +44,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             let data_str = String::from_utf8_lossy(data);
                             println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
 
-                            let header = data[0];
+                            match data[0] {
+                                0x0D => {
+                                    let data = &data[2..];
 
-                            // convert header to little endian
-                            let header = header.to_le_bytes();
-                            let message_type = (header[0] & 0xF0) >> 4;
-                            let protocol_version = header[0] & 0x0F;
+                                    let basic_id = parse_basic_id(data);
 
-
-                            println!("Header: {:?} {:?} {:?}", header, message_type, protocol_version);
-
-
-                            match message_type {
-                                0x01 => {
-                                    // parse basic id
-                                    let basic_id = parsers::parse_basic_id(data);
                                     println!("Basic ID: {:?}", basic_id);
-                                }
-                                0x02 => {
-                                    // parse location
-                                    // let location = parsers::parse_location(data);
-                                    // println!("Location: {:?}", location);
-                                }
-                                0x03 => {
-                                    // parse authentication
-                                    // let authentication = parsers::parse_authentication(data);
-                                    // println!("Authentication: {:?}", authentication);
                                 }
                                 _ => {}
                             }
