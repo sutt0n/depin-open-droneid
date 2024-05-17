@@ -44,7 +44,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             let data_str = String::from_utf8_lossy(data);
                             println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
 
-                            match data[0] {
+                            let header = data[0];
+                            let message_type = (data[0] & 0xF0) >> 4;
+                            let protocol_version = data[0] & 0x0F;
+
+                            println!("Header: {:?} {:?} {:?}", header, message_type, protocol_version);
+
+
+                            match message_type {
                                 0x01 => {
                                     // parse basic id
                                     let basic_id = parsers::parse_basic_id(data);
