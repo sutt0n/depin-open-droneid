@@ -46,7 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                             match data[0] {
                                 0x0D => {
-                                    let data = &data[2..];
+                                    let data = &data[1..];
 
                                     let header = data[0];
                                     // message type is 4 bits, protocol version is last 4 bits
