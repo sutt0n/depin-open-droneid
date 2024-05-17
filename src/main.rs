@@ -48,9 +48,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                 0x0D => {
                                     let data = &data[2..];
 
-                                    let basic_id = parse_basic_id(data);
+                                    let header = data[0];
+                                    // message type is 4 bits, protocol version is last 4 bits
+                                    let message_type = header & 0xF0 >> 4;
+                                    let protocol_version = header & 0x0F;
 
-                                    println!("Basic ID: {:?}", basic_id);
+                                    println!("Message Type: {} Protocol Version: {}", message_type, protocol_version);
+
+                                    match message_type {
+                                        0 => {
+                                            let basic_id = parse_basic_id(data);
+
+                                            println!("Basic ID: {:?}", basic_id);
+                                        }
+                                        1 => {
+                                            println!("Location!");
+                                        }
+                                        _ => {}
+                                    }
                                 }
                                 _ => {}
                             }
