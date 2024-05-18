@@ -67,7 +67,7 @@ pub fn parse_location(data: &[u8]) -> Location {
         vertical_accuracy: data[20] & 0x0F,
         barometric_pressure_accuracy: data[21] & 0xF0 >> 4,
         speed_accuracy: data[21] & 0x0F,
-        timestamp: LittleEndian::read_u24(&data[22..24]),
+        timestamp: LittleEndian::read_u24(&data[22..23]),
     }
 }
 
