@@ -48,7 +48,7 @@ pub struct Location {
     pub height: i16,
     pub horizontal_accuracy: u8,
     pub vertical_accuracy: u8,
-    pub barometric_pressure_accuracy: u8,
+    pub barometric_altitude_accuracy: u8,
     pub speed_accuracy: u8,
     pub timestamp: u32,
 }

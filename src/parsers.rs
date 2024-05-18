@@ -70,9 +70,11 @@ pub fn parse_location(data: &[u8]) -> Location {
         height: LittleEndian::read_i16(&data[16..18]),
         horizontal_accuracy: (data[18] & 0xF0) >> 4,
         vertical_accuracy: data[18] & 0x0F,
-        barometric_pressure_accuracy: 0,
-        speed_accuracy: 0,
-        timestamp: 0,
+        // barometric altitude accuracy bits 7..4
+        barometric_altitude_accuracy: (data[19] & 0xF0) >> 4,
+        // speed accuracy bits 3..0
+        speed_accuracy: data[19] & 0x0F,
+        timestamp: LittleEndian::read_u32(&data[20..22]),
         // longitude: LittleEndian::read_f32(&data[9..13]),
         // altitude_pressure: LittleEndian::read_i16(&data[13..15]),
         // altitude_geodetic: LittleEndian::read_i16(&data[15..17]),
