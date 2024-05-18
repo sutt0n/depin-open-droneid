@@ -26,7 +26,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
     //     println!("{:?}", event);
     // }
 
-    tokio::spawn(async move {
+    // tokio::spawn(async move {
         while let Some(event) = events.next().await {
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
@@ -94,7 +94,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 bluez_async::BluetoothEvent::Characteristic { id, event } => {
                 }, }
         }
-    }).await?;
+    // }).await?;
 
     Ok(())
 }
