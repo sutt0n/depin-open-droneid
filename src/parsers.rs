@@ -63,10 +63,13 @@ pub fn parse_location(data: &[u8]) -> Location {
         // set every field to 0 for testing
         longitude_int: LittleEndian::read_i32(&data[8..12]),
         altitude_pressure: LittleEndian::read_u16(&data[12..14]),
+        // (Altitude + 1000 m)/0.5
+        // –1000–31767 m (107503 ft) 16 bit UINT (LE)
+        // example: 2021 (enc) = 10.5 m
         altitude_geodetic: LittleEndian::read_u16(&data[14..16]),
-        height: 0,
-        horizontal_accuracy: 0,
-        vertical_accuracy: 0,
+        height: LittleEndian::read_i16(&data[16..18]),
+        horizontal_accuracy: (data[18] & 0xF0) >> 4,
+        vertical_accuracy: data[18] & 0x0F,
         barometric_pressure_accuracy: 0,
         speed_accuracy: 0,
         timestamp: 0,
