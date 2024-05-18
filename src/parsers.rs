@@ -58,7 +58,7 @@ pub fn parse_location(data: &[u8]) -> Location {
         tracking_direction: data[1],
         speed: data[2],
         vertical_speed: data[3],
-        latitude: LittleEndian::read_f32(&data[4..8]),
+        latitude: LittleEndian::read_f32(&data[3..7]),
         // set every field to 0 for testing
         longitude: 0.0,
         altitude_pressure: 0,
