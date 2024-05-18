@@ -15,6 +15,7 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
         uas_id_type: match id_type {
             0 => UasIdType::SerialNumber,
             1 => UasIdType::CaaRegistration,
+            3 => UasIdType::UtmId,
             _ => UasIdType::Other(id_type),
         },
         ua_type: match ua_type {
@@ -45,6 +46,10 @@ pub fn parse_location(data: &[u8]) -> Location {
     let height_type = data[0] & 0x04;
     let ew_direction = data[0] & 0x02;
     let speed_multiplier = data[0] & 0x01;
+
+    println!("Status: {} Reserved: {} Height Type: {} EW Direction: {} Speed Multiplier: {}", status, reserved, height_type, ew_direction, speed_multiplier);
+
+    println!("Data: {:?} {}", data, data.len());
 
     Location {
         status,

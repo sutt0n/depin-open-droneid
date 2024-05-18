@@ -2,6 +2,7 @@
 pub enum UasIdType {
     SerialNumber,
     CaaRegistration,
+    UtmId,
     Other(u8),
 }
 
