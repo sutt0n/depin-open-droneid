@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
                     if !id.to_string().contains(device_name) {
-                        break;
+                        continue;
                     }
                     match event {
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
