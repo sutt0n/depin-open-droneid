@@ -10,6 +10,7 @@ use crate::parsers::{parse_basic_id, parse_location, parse_operator_id, parse_sy
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
+    let device_name = "hci1";
 
     let (_, session) = BluetoothSession::new().await?;
     let mut events = session.event_stream().await?;
@@ -21,14 +22,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         .await?;
 
     let adapters = session.get_adapters().await?;
-    // let mut adapter_to_use = None;
+    let mut adapter_to_use = None;
 
     for adapter in adapters {
-        if adapter.powered && adapter.discovering {
-            let adapter = session.get_adapter_info(&adapter.id).await?;
-            println!("Adapter: {:?}", adapter);
+        if adapter.powered && adapter.discovering && adapter.id.to_string().contains(device_name) {
+            adapter_to_use = Some(adapter);
         }
     }
+
+    println!("Adapter to use: {:?}", adapter_to_use);
 
     println!("Events:");
     // while let Some(event) = events.next().await {
