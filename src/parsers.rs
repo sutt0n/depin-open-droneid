@@ -59,11 +59,11 @@ pub fn parse_location(data: &[u8]) -> Location {
         speed: data[2],
         vertical_speed: data[3],
         // latitude is 4 bytes from bit 3 to 7
-        latitude: LittleEndian::read_i32(&data[4..8]) / 10000000,
+        latitude_int: LittleEndian::read_i32(&data[4..8]),
         // set every field to 0 for testing
-        longitude: LittleEndian::read_i32(&data[8..12]) / 10000000,
-        altitude_pressure: 0,
-        altitude_geodetic: 0,
+        longitude_int: LittleEndian::read_i32(&data[8..12]),
+        altitude_pressure: LittleEndian::read_u16(&data[12..14]),
+        altitude_geodetic: LittleEndian::read_u16(&data[14..16]),
         height: 0,
         horizontal_accuracy: 0,
         vertical_accuracy: 0,
