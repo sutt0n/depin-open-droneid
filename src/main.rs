@@ -21,17 +21,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         })
         .await?;
 
-    let adapters = session.get_adapters().await?;
-    let mut adapter_to_use = None;
-
-    for adapter in adapters {
-        if adapter.powered && adapter.discovering && adapter.id.to_string().contains(device_name) {
-            adapter_to_use = Some(adapter);
-        }
-    }
-
-    println!("Adapter to use: {:?}", adapter_to_use);
-
     println!("Events:");
     // while let Some(event) = events.next().await {
     //     println!("{:?}", event);
@@ -41,7 +30,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         while let Some(event) = events.next().await {
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
-                    println!("Device Event ID: {:?}", id);
+                    if !id.to_string().contains(device_name) {
+                        break;
+                    }
                     match event {
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
                             // get first value of service data
