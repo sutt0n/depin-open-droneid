@@ -21,9 +21,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
         .await?;
 
     let adapters = session.get_adapters().await?;
+    // let mut adapter_to_use = None;
 
     for adapter in adapters {
-        println!("Adapter: {:?}", adapter);
+        if adapter.powered && adapter.discovering {
+            let adapter = session.get_adapter_info(&adapter.id).await?;
+            println!("Adapter: {:?}", adapter);
+        }
     }
 
     println!("Events:");
