@@ -9,7 +9,7 @@ pub enum UasIdType {
 pub enum UaType {
     Undeclared,
     Aeroplane,
-    Helicopter,
+    HelicopterOrDrone,
     Gyroplane,
     HybridLift,
     Ornithopter,
@@ -35,8 +35,11 @@ pub struct BasicId {
 #[derive(Debug)]
 pub struct Location {
     pub status: u8,
-    pub direction: u16,
-    pub speed: u16,
+    pub ew_direction: u8,
+    pub height_type: u8,
+    pub tracking_direction: u8,
+    pub speed: u8,
+    pub vertical_speed: u8,
     pub latitude: f32,
     pub longitude: f32,
     pub altitude_pressure: i16,

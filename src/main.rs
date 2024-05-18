@@ -67,6 +67,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                         1 => {
                                             println!("Location!");
                                         }
+                                        4 => {
+                                            println!("System message!")
+                                        }
+                                        5 => {
+                                            println!("Operator ID");
+                                        }
                                         _ => {}
                                     }
                                 }
