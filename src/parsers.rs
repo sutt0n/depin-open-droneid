@@ -43,15 +43,15 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
 pub fn parse_system_message(data: &[u8]) -> SystemMessage {
     let flags = &data[0];
 
-    // operator_location_type: bits 0 to 1
-    let operator_location_type = match flags & 0x000f {
-        0x0 => OperatorLocationType::TakeOff,
-        0x1 => OperatorLocationType::LiveGNSS,
-        0x2 => OperatorLocationType::FixedLocation,
-        i => OperatorLocationType::Other(i)
-    };
+    // operator_location_type: flag bits 0 - 1
+    let operator_location_type = flags & 0x03;
 
-    println!("Operator location type {:?}", operator_location_type);
+    let operator_location_type = match operator_location_type {
+        0 => OperatorLocationType::TakeOff,
+        1 => OperatorLocationType::LiveGNSS,
+        2 => OperatorLocationType::FixedLocation,
+        i => OperatorLocationType::Other(i),
+    };
 
     SystemMessage {
         operator_location_type,
