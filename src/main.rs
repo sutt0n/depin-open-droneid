@@ -6,7 +6,7 @@ use futures::stream::StreamExt;
 mod parsers;
 mod messages;
 
-use crate::parsers::{parse_basic_id, parse_location, parse_operator_id};
+use crate::parsers::{parse_basic_id, parse_location, parse_operator_id, parse_system_message};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
@@ -70,7 +70,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                             println!("Location: {:?}", location);
                                         }
                                         4 => {
-                                            println!("System message!")
+                                            let system_message = parse_system_message(data);
+                                            println!("System Message: {:?}", system_message);
+
                                         }
                                         5 => {
                                             let operator = parse_operator_id(data);

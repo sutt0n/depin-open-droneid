@@ -63,6 +63,25 @@ pub struct Authentication {
 }
 
 #[derive(Debug)]
+pub enum OperatorLocationType {
+    TakeOff,
+    LiveGNSS,
+    FixedLocation,
+    Other(u8)
+}
+
+#[derive(Debug)]
+pub struct SystemMessage {
+    pub operator_location_type: OperatorLocationType,
+    pub operator_latitude_int: i32,
+    pub operator_longitude_int: i32,
+    pub area_count: i16,
+    pub area_radius: u8,
+    pub area_ceiling: u16,
+    pub area_floor: u16,
+}
+
+#[derive(Debug)]
 pub struct Operator {
     pub operator_id_type: u8,
     pub operator_id: String,

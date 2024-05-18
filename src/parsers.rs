@@ -1,4 +1,4 @@
-use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType, Operator};
+use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType, Operator, SystemMessage, OperatorLocationType};
 use byteorder::{ByteOrder, LittleEndian, BigEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
@@ -37,6 +37,30 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
             _ => UaType::Other(ua_type),
         },
         uas_id: String::from_utf8_lossy(&uas_id).to_string(),
+    }
+}
+
+pub fn parse_system_message(data: &[u8]) -> SystemMessage {
+    let flags = &data[0];
+
+    // operator_location_type: bits 0 to 1
+    let operator_location_type = match flags & 0x000f {
+        0x0 => OperatorLocationType::TakeOff,
+        0x1 => OperatorLocationType::LiveGNSS,
+        0x2 => OperatorLocationType::FixedLocation,
+        i => OperatorLocationType::Other(i)
+    };
+
+    println!("Operator location type {:?}", operator_location_type);
+
+    SystemMessage {
+        operator_location_type,
+        operator_latitude_int: 0,
+        operator_longitude_int: 0,
+        area_count: 0,
+        area_radius: 0,
+        area_ceiling: 0,
+        area_floor: 0,
     }
 }
 
