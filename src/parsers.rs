@@ -1,4 +1,4 @@
-use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType};
+use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType, Operator};
 use byteorder::{ByteOrder, LittleEndian, BigEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
@@ -40,16 +40,22 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
     }
 }
 
+pub fn parse_operator_id(data: &[u8]) -> Operator {
+    let operator_id_type = data[0];
+    let operator_id = &data[1..data.len() - 3].iter().cloned().filter(|&x| x != 0).collect::<Vec<u8>>();
+
+    Operator {
+        operator_id_type,
+        operator_id: String::from_utf8_lossy(&operator_id).to_string(),
+    }
+}
+
 pub fn parse_location(data: &[u8]) -> Location {
     let status = (data[0] & 0xF0) >> 4;
     let reserved = data[0] & 0x08;
     let height_type = data[0] & 0x04;
     let ew_direction = data[0] & 0x02;
     let speed_multiplier = data[0] & 0x01;
-
-    println!("Status: {} Reserved: {} Height Type: {} EW Direction: {} Speed Multiplier: {}", status, reserved, height_type, ew_direction, speed_multiplier);
-
-    println!("Data: {:?} {}", data, data.len());
 
     Location {
         status,
@@ -63,27 +69,13 @@ pub fn parse_location(data: &[u8]) -> Location {
         // set every field to 0 for testing
         longitude_int: LittleEndian::read_i32(&data[8..12]),
         altitude_pressure: LittleEndian::read_u16(&data[12..14]),
-        // (Altitude + 1000 m)/0.5
-        // –1000–31767 m (107503 ft) 16 bit UINT (LE)
-        // example: 2021 (enc) = 10.5 m
         altitude_geodetic: LittleEndian::read_u16(&data[14..16]),
         height: LittleEndian::read_i16(&data[16..18]),
         horizontal_accuracy: (data[18] & 0xF0) >> 4,
         vertical_accuracy: data[18] & 0x0F,
-        // barometric altitude accuracy bits 7..4
         barometric_altitude_accuracy: (data[19] & 0xF0) >> 4,
-        // speed accuracy bits 3..0
         speed_accuracy: data[19] & 0x0F,
         timestamp: LittleEndian::read_u16(&data[19..21]),
-        // longitude: LittleEndian::read_f32(&data[9..13]),
-        // altitude_pressure: LittleEndian::read_i16(&data[13..15]),
-        // altitude_geodetic: LittleEndian::read_i16(&data[15..17]),
-        // height: LittleEndian::read_i16(&data[17..19]),
-        // horizontal_accuracy: (data[20] & 0xF0) >> 4,
-        // vertical_accuracy: data[20] & 0x0F,
-        // barometric_pressure_accuracy: data[21] & 0xF0 >> 4,
-        // speed_accuracy: data[21] & 0x0F,
-        // timestamp: LittleEndian::read_u24(&data[22..23]),
     }
 }
 

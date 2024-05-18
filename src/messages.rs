@@ -63,6 +63,12 @@ pub struct Authentication {
 }
 
 #[derive(Debug)]
+pub struct Operator {
+    pub operator_id_type: u8,
+    pub operator_id: String,
+}
+
+#[derive(Debug)]
 pub enum RemoteIdMessage {
     BasicId(BasicId),
     Location(Location),
