@@ -50,7 +50,7 @@ pub struct Location {
     pub vertical_accuracy: u8,
     pub barometric_altitude_accuracy: u8,
     pub speed_accuracy: u8,
-    pub timestamp: u32,
+    pub timestamp: u16,
 }
 
 #[derive(Debug)]
