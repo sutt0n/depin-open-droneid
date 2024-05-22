@@ -1,16 +1,20 @@
-//! Example to log Bluetooth events, including duplicate manufacturer-specific advertisement data.
+use std::collections::HashMap;
 
-use bluez_async::{BluetoothSession, DiscoveryFilter};
+use bluez_async::{BluetoothSession, DiscoveryFilter, DeviceId};
 use futures::stream::StreamExt;
 
 mod parsers;
 mod messages;
+mod drone;
 
 use crate::parsers::{parse_basic_id, parse_location, parse_operator_id, parse_system_message};
+use crate::drone::Drone;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>>{
     let device_name = "hci1";
+
+    let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
     let (_, session) = BluetoothSession::new().await?;
     let mut events = session.event_stream().await?;
@@ -26,10 +30,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
     //     println!("{:?}", event);
     // }
 
-    // tokio::spawn(async move {
+    tokio::spawn(async move {
         while let Some(event) = events.next().await {
             match event {
                 bluez_async::BluetoothEvent::Device{id,event} => {
+                    if !id.to_string().contains(device_name) {
+                        continue;
+                    }
                     match event {
                         bluez_async::DeviceEvent::ServiceData { service_data } => {
                             // get first value of service data
@@ -44,6 +51,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
                             println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
+
+                            // check if drone is already in hashmap
+                            let drone = drones.get(&id);
+
+                            if drone.is_none() {
+                                let drone = Drone::new(None, None, None, None);
+                                drones.insert(id.clone(), drone);
+                            } else {
+                                if drone.unwrap().payload_ready() {
+                                    println!("Payload Ready {:?}", drone);
+                                }
+                            }
 
                             match data[0] {
                                 0x0D => {
@@ -62,22 +81,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                     match message_type {
                                         0 => {
                                             let basic_id = parse_basic_id(data);
+                                            drones.get_mut(&id).unwrap().update_basic_id(basic_id);
 
-                                            println!("Basic ID: {:?}", basic_id);
                                         }
                                         1 => {
-                                            println!("Location!");
                                             let location = parse_location(data);
-                                            println!("Location: {:?}", location);
+                                            drones.get_mut(&id).unwrap().update_location(location);
                                         }
                                         4 => {
                                             let system_message = parse_system_message(data);
-                                            println!("System Message: {:?}", system_message);
+                                            drones.get_mut(&id).unwrap().update_system_message(system_message);
 
                                         }
                                         5 => {
                                             let operator = parse_operator_id(data);
-                                            println!("Operator: {:?}", operator);
+                                            drones.get_mut(&id).unwrap().update_operator(operator);
                                         }
                                         _ => {}
                                     }
@@ -94,7 +112,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                 bluez_async::BluetoothEvent::Characteristic { id, event } => {
                 }, }
         }
-    // }).await?;
+    }).await?;
 
     Ok(())
 }

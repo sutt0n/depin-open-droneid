@@ -33,7 +33,7 @@ pub struct BasicId {
     pub uas_id: String,  // Assuming UTF-8 encoding; adjust based on actual spec
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Location {
     pub status: u8,
     pub ew_direction: u8,
