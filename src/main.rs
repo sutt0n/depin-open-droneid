@@ -77,20 +77,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                                     match message_type {
                                         0 => {
+                                            println!("Basic ID");
                                             let basic_id = parse_basic_id(data);
                                             drones.get_mut(&id).unwrap().update_basic_id(basic_id);
 
                                         }
                                         1 => {
+                                            println!("Location");
                                             let location = parse_location(data);
                                             drones.get_mut(&id).unwrap().update_location(location);
                                         }
                                         4 => {
+                                            println!("System Message");
                                             let system_message = parse_system_message(data);
                                             drones.get_mut(&id).unwrap().update_system_message(system_message);
 
                                         }
                                         5 => {
+                                            println!("Operator ID");
                                             let operator = parse_operator_id(data);
                                             drones.get_mut(&id).unwrap().update_operator(operator);
                                         }
