@@ -51,15 +51,19 @@ impl Drone {
     pub fn payload_progress(&self) -> i32 {
         let mut progress = 0;
         if self.basic_id.is_some() {
+            println!("Basic ID Found");
             progress += 1;
         }
         if self.last_location.is_some() {
+            println!("Last Location Found");
             progress += 1;
         }
         if self.system_message.is_some() {
+            println!("System Message Found");
             progress += 1;
         }
         if self.operator.is_some() {
+            println!("Operator Found");
             progress += 1;
         }
         progress
