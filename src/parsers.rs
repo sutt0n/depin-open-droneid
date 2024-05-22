@@ -59,10 +59,10 @@ pub fn parse_system_message(data: &[u8]) -> SystemMessage {
         operator_location_type,
         operator_latitude_int: LittleEndian::read_i32(&data[1..5]),
         operator_longitude_int: LittleEndian::read_i32(&data[5..9]),
-        area_count: 0,
-        area_radius: 0,
-        area_ceiling: 0,
-        area_floor: 0,
+        area_count: LittleEndian::read_i16(&data[9..11]),
+        area_radius: data[12],
+        area_ceiling: LittleEndian::read_u16(&data[13..15]),
+        area_floor: LittleEndian::read_u16(&data[15..17]),
     }
 }
 
