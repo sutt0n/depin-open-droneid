@@ -38,9 +38,10 @@ impl Drone {
     }
 
     pub fn update_location(&mut self, location: Location) {
-        let last_location = self.last_location.clone().unwrap();
-        self.location_history.push(last_location.clone());
-        self.last_location = Some(location);
+        if let Some(last_location) = self.last_location.clone() {
+            self.location_history.push(last_location.clone());
+            self.last_location = Some(location);
+        }
     }
 
     pub fn payload_ready(&self) -> bool {
