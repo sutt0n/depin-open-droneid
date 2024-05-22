@@ -50,8 +50,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
 
                             // to lossy string
                             let data_str = String::from_utf8_lossy(data);
-                            println!("Service Data: {} {:?} {:?}", data[0], data, data_str);
-
                             // check if drone is already in hashmap
                             let drone = drones.get(&id);
 
@@ -59,6 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                 let drone = Drone::new(None, None, None, None);
                                 drones.insert(id.clone(), drone);
                             } else {
+                                println!("Drone already in hashmap {}", drone.unwrap().payload_progress());
                                 if drone.unwrap().payload_ready() {
                                     println!("Payload Ready {:?}", drone);
                                 }
@@ -75,8 +74,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                     let protocol_version = header & 0x0F;
 
                                     let data = &data[1..];
-
-                                    println!("Message Type: {} Protocol Version: {}", message_type, protocol_version);
 
                                     match message_type {
                                         0 => {
