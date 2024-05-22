@@ -43,6 +43,8 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
 pub fn parse_system_message(data: &[u8]) -> SystemMessage {
     let flags = &data[0];
 
+    println!("Data: {:?}", data);
+
     // operator_location_type: flag bits 0 - 1
     let operator_location_type = flags & 0x03;
 
