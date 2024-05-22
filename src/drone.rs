@@ -12,12 +12,14 @@ pub struct Drone {
 impl Drone {
     pub fn new(basic_id: Option<BasicId>, last_location: Option<Location>, system_message: Option<SystemMessage>, operator: Option<Operator>) -> Drone {
         let last_location = last_location.clone();
+        let last_location_history = match last_location.clone() {
+            Some(location) => vec![location.clone()],
+            None => vec![],
+        };
         Drone {
             basic_id,
             last_location: last_location.clone(),
-            location_history: vec![
-                last_location.unwrap().clone(),
-            ],
+            location_history: last_location_history,
             system_message,
             operator,
         }
