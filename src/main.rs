@@ -57,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>>{
                                 let drone = Drone::new(None, None, None, None);
                                 drones.insert(id.clone(), drone);
                             } else {
-                                println!("Drone already in hashmap {}", drone.unwrap().payload_progress());
+                                println!("Drone already in hashmap {} {}", drone.unwrap().payload_progress(), drones.len());
                                 if drone.unwrap().payload_ready() {
                                     println!("Payload Ready {:?}", drone);
                                 }
