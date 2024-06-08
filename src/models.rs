@@ -1,6 +1,5 @@
 use ::chrono::{Utc, DateTime};
 use serde::{Deserialize, Serialize};
-use sqlx::types::chrono;
 
 use crate::drone::Drone;
 
@@ -20,7 +19,7 @@ pub struct DroneUpdate {
 pub struct DroneDto {
     pub id: i32,
     pub serial_number: String,
-    pub created: chrono::DateTime<chrono::Utc>,
+    pub created: DateTime<Utc>,
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
