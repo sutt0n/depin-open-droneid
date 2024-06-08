@@ -96,6 +96,7 @@ pub fn parse_location(data: &[u8]) -> Location {
         status,
         height_type,
         ew_direction,
+        speed_multiplier,
         tracking_direction: data[1],
         speed: data[2],
         vertical_speed: data[3],

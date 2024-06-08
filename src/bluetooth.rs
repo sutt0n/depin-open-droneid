@@ -11,18 +11,18 @@ pub fn handle_bluetooth_event(
     drones: &mut HashMap<DeviceId, Drone>,
     device_name: &str,
     event: bluez_async::BluetoothEvent,
-) {
+) -> Option<DeviceId> {
     match event {
         bluez_async::BluetoothEvent::Device { id, event } => {
             if !id.to_string().contains(device_name) {
-                return;
+                return Some(id);
             }
             match event {
                 bluez_async::DeviceEvent::ServiceData { service_data } => {
                     let data = service_data.values().next().unwrap().as_slice();
 
                     if data.len() < 20 {
-                        return;
+                        return Some(id);
                     }
 
                     let drone = drones.get(&id);
@@ -86,18 +86,13 @@ pub fn handle_bluetooth_event(
                         }
                         _ => {}
                     }
+
+                    Some(id)
                 }
 
-                _ => {}
+                _ => Some(id),
             }
         }
-        bluez_async::BluetoothEvent::Adapter {
-            id: _id,
-            event: _event,
-        } => {}
-        bluez_async::BluetoothEvent::Characteristic {
-            id: _id,
-            event: _event,
-        } => {}
+        _ => None,
     }
 }

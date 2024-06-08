@@ -1,6 +1,8 @@
+use serde::{Deserialize, Serialize};
+
 use crate::messages::{BasicId, Location, Operator, SystemMessage};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Drone {
     pub basic_id: Option<BasicId>,
     pub last_location: Option<Location>,

@@ -2,11 +2,18 @@ use std::collections::HashMap;
 
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
 use futures::stream::StreamExt;
+use models::{DroneDto, DroneUpdate, MutationKind};
+use routes::insert_drone;
+use sqlx::postgres::PgPoolOptions;
 
 mod bluetooth;
 mod drone;
+mod errors;
 mod messages;
+mod models;
 mod parsers;
+mod router;
+mod routes;
 
 use crate::bluetooth::handle_bluetooth_event;
 use crate::drone::Drone;
@@ -17,6 +24,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
+    let sqlx_connection = PgPoolOptions::new()
+        .connect("postgres://postgres:postgres@localhost:5432/db")
+        .await
+        .unwrap();
+
     let (_, session) = BluetoothSession::new().await?;
     let mut events = session.event_stream().await?;
     session
@@ -26,11 +38,37 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .await?;
 
+    let (router, tx) = router::init_router(sqlx_connection.clone());
+
     // Spawn a task to handle bluetooth events
     tokio::spawn(async move {
         while let Some(event) = events.next().await {
-            handle_bluetooth_event(&mut drones, device_name, event);
+            match handle_bluetooth_event(&mut drones, device_name, event) {
+                Some(device_id) => {
+                    let drone = drones.get(&device_id);
+
+                    if !drone.is_none() {
+                        let drone = drone.unwrap();
+                        if drone.payload_ready() {
+                            let drone_dto: DroneDto = drone.clone().into();
+                            // Insert drone into database
+                            insert_drone(drone_dto, &sqlx_connection, &tx).await;
+                        }
+                    }
+                }
+                None => {}
+            }
         }
+    })
+    .await?;
+
+    // Spawn a task to serve axum
+    tokio::spawn(async move {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
+            .await
+            .unwrap();
+
+        let _ = axum::serve(listener, router);
     })
     .await?;
 

@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UasIdType {
     SerialNumber,
     CaaRegistration,
@@ -6,7 +8,7 @@ pub enum UasIdType {
     Other(u8),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum UaType {
     Undeclared,
     Aeroplane,
@@ -26,19 +28,20 @@ pub enum UaType {
     Other(u8),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BasicId {
     pub uas_id_type: UasIdType,
     pub ua_type: UaType,
     pub uas_id: String, // Assuming UTF-8 encoding; adjust based on actual spec
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Location {
     pub status: u8,
     pub ew_direction: u8,
     pub height_type: u8,
     pub tracking_direction: u8,
+    pub speed_multiplier: u8,
     pub speed: u8,
     pub vertical_speed: u8,
     pub latitude_int: i32,
@@ -53,7 +56,7 @@ pub struct Location {
     pub timestamp: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Authentication {
     pub auth_type: u8,
     pub page: u8,
@@ -62,7 +65,7 @@ pub struct Authentication {
     pub auth_data: Vec<u8>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum OperatorLocationType {
     TakeOff,
     LiveGNSS,
@@ -70,7 +73,7 @@ pub enum OperatorLocationType {
     Other(u8),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SystemMessage {
     pub operator_location_type: OperatorLocationType,
     pub operator_latitude_int: i32,
@@ -81,13 +84,13 @@ pub struct SystemMessage {
     pub area_floor: u16,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Operator {
     pub operator_id_type: u8,
     pub operator_id: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum RemoteIdMessage {
     BasicId(BasicId),
     Location(Location),
