@@ -43,7 +43,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (router, tx) = router::init_router(sqlx_connection.clone());
 
     // Spawn a task to handle bluetooth events
-    tokio::spawn(async move {
+    let bt_task = tokio::spawn(async move {
         while let Some(event) = events.next().await {
             if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event) {
                 let drone = drones.get_mut(&device_id);
@@ -64,18 +64,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         }
-    })
-    .await?;
+    });
 
     // Spawn a task to serve axum
-    tokio::spawn(async move {
+    let webserver_task = tokio::spawn(async move {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
             .await
             .unwrap();
 
         let _ = axum::serve(listener, router);
-    })
-    .await?;
+    });
+
+    // Run both tasks concurrently
+    tokio::try_join!(bt_task, webserver_task)?;
 
     Ok(())
 }
