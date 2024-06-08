@@ -30,7 +30,7 @@ pub enum UaType {
 pub struct BasicId {
     pub uas_id_type: UasIdType,
     pub ua_type: UaType,
-    pub uas_id: String,  // Assuming UTF-8 encoding; adjust based on actual spec
+    pub uas_id: String, // Assuming UTF-8 encoding; adjust based on actual spec
 }
 
 #[derive(Debug, Clone)]
@@ -67,7 +67,7 @@ pub enum OperatorLocationType {
     TakeOff,
     LiveGNSS,
     FixedLocation,
-    Other(u8)
+    Other(u8),
 }
 
 #[derive(Debug)]
@@ -94,4 +94,3 @@ pub enum RemoteIdMessage {
     Authentication(Authentication),
     Unknown,
 }
-

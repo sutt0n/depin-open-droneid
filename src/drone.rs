@@ -1,4 +1,4 @@
-use crate::messages::{BasicId, Location, SystemMessage, Operator};
+use crate::messages::{BasicId, Location, Operator, SystemMessage};
 
 #[derive(Debug)]
 pub struct Drone {
@@ -10,7 +10,12 @@ pub struct Drone {
 }
 
 impl Drone {
-    pub fn new(basic_id: Option<BasicId>, last_location: Option<Location>, system_message: Option<SystemMessage>, operator: Option<Operator>) -> Drone {
+    pub fn new(
+        basic_id: Option<BasicId>,
+        last_location: Option<Location>,
+        system_message: Option<SystemMessage>,
+        operator: Option<Operator>,
+    ) -> Drone {
         let last_location = last_location.clone();
         let last_location_history = match last_location.clone() {
             Some(location) => vec![location.clone()],
@@ -46,7 +51,10 @@ impl Drone {
     }
 
     pub fn payload_ready(&self) -> bool {
-        self.basic_id.is_some() && self.last_location.is_some() && self.system_message.is_some() && self.operator.is_some()
+        self.basic_id.is_some()
+            && self.last_location.is_some()
+            && self.system_message.is_some()
+            && self.operator.is_some()
     }
 
     pub fn payload_progress(&self) -> i32 {
@@ -69,5 +77,4 @@ impl Drone {
         }
         progress
     }
-
 }

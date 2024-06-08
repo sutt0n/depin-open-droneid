@@ -1,5 +1,8 @@
-use crate::messages::{BasicId, Location, Authentication, UaType, UasIdType, Operator, SystemMessage, OperatorLocationType};
-use byteorder::{ByteOrder, LittleEndian, BigEndian};
+use crate::messages::{
+    Authentication, BasicId, Location, Operator, OperatorLocationType, SystemMessage, UaType,
+    UasIdType,
+};
+use byteorder::{BigEndian, ByteOrder, LittleEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
     let id_type = (data[0] & 0xF0) >> 4;
@@ -9,7 +12,11 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
     let uas_id = &data[1..data.len() - 1];
 
     // remove null bytes from uas_id
-    let uas_id = uas_id.iter().cloned().filter(|&x| x != 0).collect::<Vec<u8>>();
+    let uas_id = uas_id
+        .iter()
+        .cloned()
+        .filter(|&x| x != 0)
+        .collect::<Vec<u8>>();
 
     BasicId {
         uas_id_type: match id_type {
@@ -43,8 +50,6 @@ pub fn parse_basic_id(data: &[u8]) -> BasicId {
 pub fn parse_system_message(data: &[u8]) -> SystemMessage {
     let flags = &data[0];
 
-    println!("Data: {:?}", data);
-
     // operator_location_type: flag bits 0 - 1
     let operator_location_type = flags & 0x03;
 
@@ -68,7 +73,11 @@ pub fn parse_system_message(data: &[u8]) -> SystemMessage {
 
 pub fn parse_operator_id(data: &[u8]) -> Operator {
     let operator_id_type = data[0];
-    let operator_id = &data[1..data.len() - 3].iter().cloned().filter(|&x| x != 0).collect::<Vec<u8>>();
+    let operator_id = &data[1..data.len() - 3]
+        .iter()
+        .cloned()
+        .filter(|&x| x != 0)
+        .collect::<Vec<u8>>();
 
     Operator {
         operator_id_type,
