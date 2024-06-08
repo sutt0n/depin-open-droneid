@@ -93,7 +93,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
         x_speed, y_speed,
         pilot_latitude, pilot_longitude,
         home_latitude, home_longitude
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, created, serial_number, latitude, longitude, altitude, yaw, x_speed, y_speed, pilot_latitude, pilot_longitude, home_latitude, home_longitude",
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id, serial_number, latitude, longitude, altitude, yaw, x_speed, y_speed, pilot_latitude, pilot_longitude, home_latitude, home_longitude",
     )
     .bind(drone.serial_number)
     .bind(drone.latitude)
