@@ -83,6 +83,7 @@ pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 }
 
 pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream) -> DroneDto {
+    println!("Inserting drone: {:?}", drone);
     let drone = sqlx::query_as::<_, DroneDto>(
         "INSERT INTO drones (
         serial_number,
