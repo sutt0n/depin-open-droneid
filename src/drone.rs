@@ -56,6 +56,8 @@ impl Drone {
     pub fn update_location(&mut self, location: Location) {
         if let Some(last_location) = self.last_location.clone() {
             self.location_history.push(last_location.clone());
+        } else {
+            self.location_history.push(location.clone());
         }
 
         self.last_location = Some(location);
