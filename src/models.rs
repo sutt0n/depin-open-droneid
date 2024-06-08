@@ -14,7 +14,7 @@ pub struct DroneUpdate {
     pub id: i32,
 }
 
-#[derive(sqlx::FromRow, Serialize, Deserialize)]
+#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct DroneDto {
     pub id: i32,
     pub serial_number: String,
