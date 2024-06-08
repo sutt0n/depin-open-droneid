@@ -1,4 +1,6 @@
+use ::chrono::{Utc, DateTime};
 use serde::{Deserialize, Serialize};
+use sqlx::types::chrono;
 
 use crate::drone::Drone;
 
@@ -18,7 +20,7 @@ pub struct DroneUpdate {
 pub struct DroneDto {
     pub id: i32,
     pub serial_number: String,
-    pub created: String,
+    pub created: chrono::DateTime<chrono::Utc>,
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
@@ -82,6 +84,8 @@ impl From<Drone> for DroneDto {
 
         let id = if drone.is_in_db { drone.db_id } else { 0 };
 
+        let created: DateTime<Utc> = Utc::now();
+
         DroneDto {
             serial_number: drone.basic_id.unwrap().uas_id,
             latitude,
@@ -94,8 +98,8 @@ impl From<Drone> for DroneDto {
             pilot_longitude,
             home_latitude,
             home_longitude,
-            created: "".to_string(),
             id,
+            created 
         }
     }
 }
