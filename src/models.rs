@@ -39,8 +39,6 @@ impl From<Drone> for DroneDto {
         let latitude: f64 = (latitude_int as f64 / 10_f64.powi(7)).into();
         let longitude: f64 = (longitude_int as f64 / 10_f64.powi(7)).into();
 
-        println!("Drone: {:?}", drone);
-
         let altitude: f64 = drone.last_location.as_ref().unwrap().height.into();
         let altitude: f64 = (altitude * 0.5) - 1000.0;
 
@@ -64,14 +62,19 @@ impl From<Drone> for DroneDto {
         let y_speed: f64 = drone.last_location.as_ref().unwrap().vertical_speed.into();
         let y_speed = y_speed * 0.5;
 
-        let pilot_latitude: f64 =
-            (drone.system_message.as_ref().unwrap().operator_latitude_int / 10 ^ 7).into();
-        let pilot_longitude: f64 =
-            (drone.system_message.unwrap().operator_longitude_int / 10 ^ 7).into();
+        let pilot_latitude_int = drone.system_message.as_ref().unwrap().operator_latitude_int;
+        let pilot_longitude_int = drone.system_message.unwrap().operator_longitude_int;
+
+        let pilot_latitude: f64 = (pilot_latitude_int as f64 / 10_f64.powi(7)).into();
+        let pilot_longitude: f64 = (pilot_longitude_int as f64 / 10_f64.powi(7)).into();
 
         let drone_first_location = drone.location_history.first().unwrap();
-        let home_latitude: f64 = (drone_first_location.latitude_int / 10 ^ 7).into();
-        let home_longitude: f64 = (drone_first_location.longitude_int / 10 ^ 7).into();
+
+        let home_latitude_int = drone_first_location.latitude_int;
+        let home_longitude_int = drone_first_location.longitude_int;
+
+        let home_latitude: f64 = (home_latitude_int as f64 / 10_f64.powi(7)).into();
+        let home_longitude: f64 = (home_longitude_int as f64 / 10_f64.powi(7)).into();
 
         let id = if drone.is_in_db { drone.db_id } else { 0 };
 
