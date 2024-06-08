@@ -33,8 +33,8 @@ pub struct DroneDto {
 
 impl From<Drone> for DroneDto {
     fn from(drone: Drone) -> Self {
-        let latitude: f64 = drone.last_location.as_ref().unwrap().latitude_int.into();
-        let longitude: f64 = drone.last_location.as_ref().unwrap().longitude_int.into();
+        let latitude: f64 = (drone.last_location.as_ref().unwrap().latitude_int / 10 ^ 7).into();
+        let longitude: f64 = (drone.last_location.as_ref().unwrap().longitude_int / 10 ^ 7).into();
 
         let altitude: f64 = drone.last_location.as_ref().unwrap().height.into();
         let altitude: f64 = (altitude * 0.5) - 1000.0;
@@ -59,17 +59,14 @@ impl From<Drone> for DroneDto {
         let y_speed: f64 = drone.last_location.as_ref().unwrap().vertical_speed.into();
         let y_speed = y_speed * 0.5;
 
-        let pilot_latitude: f64 = drone
-            .system_message
-            .as_ref()
-            .unwrap()
-            .operator_latitude_int
-            .into();
-        let pilot_longitude: f64 = drone.system_message.unwrap().operator_longitude_int.into();
+        let pilot_latitude: f64 =
+            (drone.system_message.as_ref().unwrap().operator_latitude_int / 10 ^ 7).into();
+        let pilot_longitude: f64 =
+            (drone.system_message.unwrap().operator_longitude_int / 10 ^ 7).into();
 
         let drone_first_location = drone.location_history.first().unwrap();
-        let home_latitude: f64 = drone_first_location.latitude_int.into();
-        let home_longitude: f64 = drone_first_location.longitude_int.into();
+        let home_latitude: f64 = (drone_first_location.latitude_int / 10 ^ 7).into();
+        let home_longitude: f64 = (drone_first_location.longitude_int / 10 ^ 7).into();
 
         let id = if drone.is_in_db { drone.db_id } else { 0 };
 
