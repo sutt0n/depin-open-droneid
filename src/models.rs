@@ -56,7 +56,11 @@ impl From<Drone> for DroneDto {
         let speed = if speed_multiplier == 1 {
             speed * 0.25
         } else {
-            speed * 0.75 + 63.75
+            if speed > 0.0 {
+                speed * 0.75 + 63.75
+            } else {
+                speed
+            }
         };
 
         let y_speed: f64 = drone.last_location.as_ref().unwrap().vertical_speed.into();
