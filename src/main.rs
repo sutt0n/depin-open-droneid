@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tokio::spawn(async move {
         while let Some(event) = events.next().await {
             if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event) {
-                let drone = drones.get(&device_id);
+                let drone = drones.get_mut(&device_id);
 
                 if drone.is_some() {
                     let drone = drone.unwrap();
@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if !drone.is_in_db {
                             let inserted_drone =
                                 insert_drone(drone_dto, &sqlx_connection, &tx).await;
-                            (&mut drone.clone()).set_in_db(true, inserted_drone.id);
+                            drone.set_in_db(true, inserted_drone.id);
                         } else {
                             update_drone(drone_dto, &sqlx_connection, &tx).await;
                         }
