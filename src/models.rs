@@ -36,6 +36,8 @@ impl From<Drone> for DroneDto {
         let latitude: f64 = (drone.last_location.as_ref().unwrap().latitude_int / 10 ^ 7).into();
         let longitude: f64 = (drone.last_location.as_ref().unwrap().longitude_int / 10 ^ 7).into();
 
+        println!("Drone: {:?}", drone);
+
         let altitude: f64 = drone.last_location.as_ref().unwrap().height.into();
         let altitude: f64 = (altitude * 0.5) - 1000.0;
 
