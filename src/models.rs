@@ -33,8 +33,11 @@ pub struct DroneDto {
 
 impl From<Drone> for DroneDto {
     fn from(drone: Drone) -> Self {
-        let latitude: f64 = (drone.last_location.as_ref().unwrap().latitude_int / 10 ^ 7).into();
-        let longitude: f64 = (drone.last_location.as_ref().unwrap().longitude_int / 10 ^ 7).into();
+        let latitude_int = drone.last_location.as_ref().unwrap().latitude_int;
+        let longitude_int = drone.last_location.as_ref().unwrap().longitude_int;
+
+        let latitude: f64 = (latitude_int as f64 / 10_f64.powi(7)).into();
+        let longitude: f64 = (longitude_int as f64 / 10_f64.powi(7)).into();
 
         println!("Drone: {:?}", drone);
 
