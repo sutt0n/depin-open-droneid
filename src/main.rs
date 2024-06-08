@@ -31,12 +31,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .unwrap();
 
-    // run postgres migrations
-    sqlx::migrate!()
-        .run(&sqlx_connection)
-        .await
-        .unwrap();
-
     let (_, session) = BluetoothSession::new().await?;
     let mut events = session.event_stream().await?;
     session
