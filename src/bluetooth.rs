@@ -30,16 +30,7 @@ pub fn handle_bluetooth_event(
                     if drone.is_none() {
                         let drone = Drone::new(None, None, None, None);
                         drones.insert(id.clone(), drone);
-                    } else {
-                        println!(
-                            "Drone already in hashmap {} {}",
-                            drone.unwrap().payload_progress(),
-                            drones.len()
-                        );
-                        if drone.unwrap().payload_ready() {
-                            println!("Payload Ready {:?}", drone);
-                        }
-                    }
+                    } 
 
                     match data[0] {
                         0x0D => {
@@ -59,7 +50,6 @@ pub fn handle_bluetooth_event(
                                     drones.get_mut(&id).unwrap().update_basic_id(basic_id);
                                 }
                                 1 => {
-                                    println!("Location message!!!!");
                                     let location = parse_location(data);
                                     drones.get_mut(&id).unwrap().update_location(location);
                                 }
