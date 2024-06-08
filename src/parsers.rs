@@ -1,6 +1,5 @@
 use crate::messages::{
-    Authentication, BasicId, Location, Operator, OperatorLocationType, SystemMessage, UaType,
-    UasIdType,
+    BasicId, Location, Operator, OperatorLocationType, SystemMessage, UaType, UasIdType,
 };
 use byteorder::{ByteOrder, LittleEndian};
 
@@ -81,7 +80,7 @@ pub fn parse_operator_id(data: &[u8]) -> Operator {
 
     Operator {
         operator_id_type,
-        operator_id: String::from_utf8_lossy(&operator_id).to_string(),
+        operator_id: String::from_utf8_lossy(operator_id).to_string(),
     }
 }
 
@@ -115,12 +114,12 @@ pub fn parse_location(data: &[u8]) -> Location {
     }
 }
 
-pub fn parse_authentication(data: &[u8]) -> Authentication {
-    Authentication {
-        auth_type: data[0],
-        page: data[1],
-        length: data[2],
-        timestamp: LittleEndian::read_u24(&data[3..6]),
-        auth_data: data[6..].to_vec(),
-    }
-}
+// pub fn parse_authentication(data: &[u8]) -> Authentication {
+//     Authentication {
+//         auth_type: data[0],
+//         page: data[1],
+//         length: data[2],
+//         timestamp: LittleEndian::read_u24(&data[3..6]),
+//         auth_data: data[6..].to_vec(),
+//     }
+// }

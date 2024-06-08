@@ -4,6 +4,8 @@ use crate::messages::{BasicId, Location, Operator, SystemMessage};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Drone {
+    pub is_in_db: bool,
+    pub db_id: i32,
     pub basic_id: Option<BasicId>,
     pub last_location: Option<Location>,
     pub location_history: Vec<Location>,
@@ -24,12 +26,19 @@ impl Drone {
             None => vec![],
         };
         Drone {
+            is_in_db: false,
+            db_id: 0,
             basic_id,
             last_location: last_location.clone(),
             location_history: last_location_history,
             system_message,
             operator,
         }
+    }
+
+    pub fn set_in_db(&mut self, in_db: bool, db_id: i32) {
+        self.is_in_db = in_db;
+        self.db_id = db_id;
     }
 
     pub fn update_basic_id(&mut self, basic_id: BasicId) {

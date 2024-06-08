@@ -5,7 +5,7 @@ use crate::drone::Drone;
 #[derive(Clone, Serialize, Debug)]
 pub enum MutationKind {
     Create,
-    Delete,
+    Update,
 }
 
 #[derive(Clone, Serialize, Debug)]
@@ -71,6 +71,8 @@ impl From<Drone> for DroneDto {
         let home_latitude: f64 = drone_first_location.latitude_int.into();
         let home_longitude: f64 = drone_first_location.longitude_int.into();
 
+        let id = if drone.is_in_db { drone.db_id } else { 0 };
+
         DroneDto {
             serial_number: drone.basic_id.unwrap().uas_id,
             latitude,
@@ -84,7 +86,7 @@ impl From<Drone> for DroneDto {
             home_latitude,
             home_longitude,
             created: "".to_string(),
-            id: 0,
+            id,
         }
     }
 }

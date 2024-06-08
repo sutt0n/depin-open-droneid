@@ -1,5 +1,5 @@
 use axum::{
-    routing::{post},
+    routing::{get, post},
     Extension, Router,
 };
 use sqlx::PgPool;
@@ -25,6 +25,7 @@ pub fn init_router(db: PgPool) -> (Router, DronesStream) {
         Router::new()
             .route("/api/drones/active", post(routes::get_active_drones))
             .route("/api/drones/all", post(routes::get_all_drones))
+            .route("/api/stream", get(routes::handle_stream))
             .with_state(state)
             .layer(Extension(tx.clone())),
         tx,

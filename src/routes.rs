@@ -44,21 +44,45 @@ pub async fn get_all_drones(State(state): State<AppState>) -> Result<impl IntoRe
         .unwrap())
 }
 
-/*
-            serial_number: drone.basic_id.unwrap().uas_id,
-            latitude,
-            longitude,
-            altitude,
-            yaw,
-            x_speed: speed,
-            y_speed,
-            pilot_latitude,
-            pilot_longitude,
-            home_latitude,
-            home_longitude,
+pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream) {
+    let _ = sqlx::query(
+        "UPDATE drones SET
+        serial_number = $1,
+        latitude = $2,
+        longtitude = $3,
+        altitude = $4,
+        yaw = $5,
+        x_speed = $6,
+        y_speed = $7,
+        pilot_latitude = $8,
+        pilot_longitude = $9,
+        home_latitude = $10,
+        home_longitude = $11
+    WHERE id = $12",
+    )
+    .bind(drone.serial_number)
+    .bind(drone.latitude)
+    .bind(drone.longitude)
+    .bind(drone.altitude)
+    .bind(drone.yaw)
+    .bind(drone.x_speed)
+    .bind(drone.y_speed)
+    .bind(drone.pilot_latitude)
+    .bind(drone.pilot_longitude)
+    .bind(drone.home_latitude)
+    .bind(drone.home_longitude)
+    .bind(drone.id)
+    .execute(db)
+    .await
+    .unwrap();
 
-*/
-pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream) {
+    let _ = tx.send(DroneUpdate {
+        mutation_kind: MutationKind::Update,
+        id: drone.id,
+    });
+}
+
+pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream) -> DroneDto {
     let drone = sqlx::query_as::<_, DroneDto>(
         "INSERT INTO drones (
         serial_number,
@@ -69,7 +93,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
         x_speed, y_speed,
         pilot_latitude, pilot_longitude,
         home_latitude, home_longitude
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id",
     )
     .bind(drone.serial_number)
     .bind(drone.latitude)
@@ -90,6 +114,8 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
         mutation_kind: MutationKind::Create,
         id: drone.id,
     });
+
+    drone
 }
 
 pub async fn handle_stream(
