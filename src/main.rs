@@ -32,7 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     // run postgres migrations
-    sqlx::migrate!("./migrations")
+    sqlx::migrate!()
         .run(&sqlx_connection)
         .await
         .unwrap();
