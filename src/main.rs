@@ -73,6 +73,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .unwrap();
 
         let _ = axum::serve(listener, router);
+
+        println!("Server running on 3001");
     });
 
     // Run both tasks concurrently
