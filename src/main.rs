@@ -21,12 +21,13 @@ use crate::routes::update_drone;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let device_name = "hci1";
+    let device_name = "hci0";
 
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
     let sqlx_connection = PgPoolOptions::new()
-        .connect("postgres://postgres:postgres@localhost:5432/db")
+        // .connect("postgres://skyflitech_drone_user:VB9%lqFBER@localhost:5432/skiflitech_drone")
+        .connect("postgres://postgres:postgres@192.168.1.79:5432/db")
         .await
         .unwrap();
 
