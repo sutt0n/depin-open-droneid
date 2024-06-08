@@ -7,10 +7,11 @@ CREATE TABLE IF NOT EXISTS drones (
     altitude DECIMAL(10, 2) NOT NULL,
     x_speed DECIMAL(10, 2) NOT NULL,
     y_speed DECIMAL(10, 2) NOT NULL,
-    z_speed DECIMAL(10, 2) NOT NULL,
     yaw DECIMAL(10, 2) NOT NULL,
     pilot_latitude DECIMAL(10, 8) NOT NULL,
     pilot_longitude DECIMAL(11, 8) NOT NULL,
     home_latitude DECIMAL(10, 8) NOT NULL,
     home_longitude DECIMAL(11, 8) NOT NULL,
 );
+
+
