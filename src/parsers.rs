@@ -2,7 +2,7 @@ use crate::messages::{
     Authentication, BasicId, Location, Operator, OperatorLocationType, SystemMessage, UaType,
     UasIdType,
 };
-use byteorder::{BigEndian, ByteOrder, LittleEndian};
+use byteorder::{ByteOrder, LittleEndian};
 
 pub fn parse_basic_id(data: &[u8]) -> BasicId {
     let id_type = (data[0] & 0xF0) >> 4;
@@ -87,7 +87,7 @@ pub fn parse_operator_id(data: &[u8]) -> Operator {
 
 pub fn parse_location(data: &[u8]) -> Location {
     let status = (data[0] & 0xF0) >> 4;
-    let reserved = data[0] & 0x08;
+    let _reserved = data[0] & 0x08;
     let height_type = data[0] & 0x04;
     let ew_direction = data[0] & 0x02;
     let speed_multiplier = data[0] & 0x01;

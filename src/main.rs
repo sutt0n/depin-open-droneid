@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
 use futures::stream::StreamExt;
-use models::{DroneDto, DroneUpdate, MutationKind};
+use models::{DroneDto};
 use routes::insert_drone;
 use sqlx::postgres::PgPoolOptions;
 
@@ -43,20 +43,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Spawn a task to handle bluetooth events
     tokio::spawn(async move {
         while let Some(event) = events.next().await {
-            match handle_bluetooth_event(&mut drones, device_name, event) {
-                Some(device_id) => {
-                    let drone = drones.get(&device_id);
+            if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event) {
+                let drone = drones.get(&device_id);
 
-                    if !drone.is_none() {
-                        let drone = drone.unwrap();
-                        if drone.payload_ready() {
-                            let drone_dto: DroneDto = drone.clone().into();
-                            // Insert drone into database
-                            insert_drone(drone_dto, &sqlx_connection, &tx).await;
-                        }
+                if !drone.is_none() {
+                    let drone = drone.unwrap();
+                    if drone.payload_ready() {
+                        let drone_dto: DroneDto = drone.clone().into();
+                        // Insert drone into database
+                        insert_drone(drone_dto, &sqlx_connection, &tx).await;
                     }
                 }
-                None => {}
             }
         }
     })

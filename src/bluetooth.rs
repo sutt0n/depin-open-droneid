@@ -49,7 +49,7 @@ pub fn handle_bluetooth_event(
                             let header = data[0];
                             // message type is 4 bits, protocol version is last 4 bits
                             let message_type = (header & 0xF0) >> 4;
-                            let protocol_version = header & 0x0F;
+                            let _protocol_version = header & 0x0F;
 
                             let data = &data[1..];
 
