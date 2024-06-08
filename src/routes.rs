@@ -49,7 +49,7 @@ pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
         "UPDATE drones SET
         serial_number = $1,
         latitude = $2,
-        longtitude = $3,
+        longitude = $3,
         altitude = $4,
         yaw = $5,
         x_speed = $6,
@@ -87,7 +87,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
         "INSERT INTO drones (
         serial_number,
         latitude,
-        longtitude,
+        longitude,
         altitude,
         yaw,
         x_speed, y_speed,
