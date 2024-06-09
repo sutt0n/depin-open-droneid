@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt as _};
 
-use crate::{errors::ApiError, router::AppState, templates};
+use crate::{errors::ApiError, router::AppState, templates, models::DroneSerialized};
 use crate::{
     models::{DroneDto, DroneUpdate, MutationKind},
     router::DronesStream,
@@ -29,6 +29,9 @@ pub async fn get_active_drones(
     .fetch_all(&state.db)
     .await?;
 
+    // convert drones to DroneSerialized
+    let drones: Vec<DroneSerialized> = drones.into_iter().map(|d| d.into()).collect();
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "application/json")
@@ -40,6 +43,12 @@ pub async fn get_all_drones(State(state): State<AppState>) -> Result<impl IntoRe
     let drones = sqlx::query_as::<_, DroneDto>("SELECT * FROM drones")
         .fetch_all(&state.db)
         .await?;
+
+    // convert drones to DroneSerialized
+    let drones = drones
+        .into_iter()
+        .map(|drone| DroneSerialized::from(drone))
+        .collect::<Vec<_>>();
 
     Ok(Response::builder()
         .status(StatusCode::OK)
