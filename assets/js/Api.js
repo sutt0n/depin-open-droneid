@@ -64,9 +64,32 @@ export const postSettings = async (settings) => {
 export const initWebSocket = () => {
   const store = useStore();
   const { updateDrone } = store;
-  const ws = new WebSocket(`http://${window.location.host}/api/stream`);
-  ws.onmessage = (event) => {
-    const drone = new Drone(JSON.parse(event.data).drone);
-    updateDrone(drone);
+  // continue to try to connect to websocket
+  let ws = null;
+
+  const connect = () => {
+    ws = new WebSocket(`ws://${window.location.host}/api/stream`);
+    ws.onmessage = (event) => {
+      const drone = new Drone(JSON.parse(event.data).drone);
+      updateDrone(drone);
+    };
+    ws.onclose = () => setTimeout(connect, 1000);
   };
+
+  const max_retries = 10;
+
+  let retries = 0;
+
+  const reconnect = () => {
+    if (retries < max_retries) {
+      retries++;
+      connect();
+    }
+  };
+
+  try {
+    connect();
+  } catch (error) {
+    reconnect();
+  }
 };
