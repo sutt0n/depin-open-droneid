@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .unwrap();
 
-        println!("Scanning for Bluetooth advertisement data.")
+        println!("Scanning for Bluetooth advertisement data.");
 
         while let Some(event) = events.next().await {
             if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event).await {
