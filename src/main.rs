@@ -45,6 +45,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .unwrap();
 
+        println!("Scanning for Bluetooth advertisement data.")
+
         while let Some(event) = events.next().await {
             if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event).await {
                 let drone = drones.get_mut(&device_id);
@@ -72,6 +74,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
             .await
             .unwrap();
+
+        println!("About to serve axum");
 
         let _ = axum::serve(listener, router).await.unwrap();
 
