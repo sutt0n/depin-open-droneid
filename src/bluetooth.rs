@@ -7,22 +7,24 @@ use crate::{
     parsers::{parse_basic_id, parse_location, parse_operator_id, parse_system_message},
 };
 
+pub type MessageType = u8;
+
 pub async fn handle_bluetooth_event(
     drones: &mut HashMap<DeviceId, Drone>,
     device_name: &str,
     event: bluez_async::BluetoothEvent,
-) -> Option<DeviceId> {
+) -> Option<(DeviceId, MessageType)> {
     match event {
         bluez_async::BluetoothEvent::Device { id, event } => {
             if !id.to_string().contains(device_name) {
-                return Some(id);
+                return Some((id, 69));
             }
             match event {
                 bluez_async::DeviceEvent::ServiceData { service_data } => {
                     let data = service_data.values().next().unwrap().as_slice();
 
                     if data.len() < 20 {
-                        return Some(id);
+                        return Some((id, 69));
                     }
 
                     let drone = drones.get(&id);
@@ -53,6 +55,9 @@ pub async fn handle_bluetooth_event(
                                     let location = parse_location(data);
                                     drones.get_mut(&id).unwrap().update_location(location);
                                 }
+                                3 => {
+                                    println!("Self ID message");
+                                }
                                 2 => {
                                     println!("Auth message");
                                 }
@@ -74,14 +79,16 @@ pub async fn handle_bluetooth_event(
                                     println!("Unknown message type {}", message);
                                 }
                             }
+
+                            return Some((id, message_type));
                         }
                         _ => {}
                     }
 
-                    Some(id)
+                    Some((id, 69))
                 }
 
-                _ => Some(id),
+                _ => Some((id, 69)),
             }
         }
         _ => None,

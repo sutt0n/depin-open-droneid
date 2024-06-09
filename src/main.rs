@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Scanning for Bluetooth advertisement data.");
 
         while let Some(event) = events.next().await {
-            if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event).await {
+            if let Some((device_id, message_type)) = handle_bluetooth_event(&mut drones, device_name, event).await {
                 let drone = drones.get_mut(&device_id);
 
                 if drone.is_some() {
@@ -63,7 +63,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 insert_drone(drone_dto, &sqlx_connection, &tx).await;
                             drone.set_in_db(true, inserted_drone.id);
                         } else {
-                            update_drone(drone_dto, &sqlx_connection, &tx).await;
+                            if message_type == 2 {
+                                insert_drone(drone_dto, &sqlx_connection, &tx).await;
+                            } 
+
                         }
                     }
                 }
