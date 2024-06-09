@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 insert_drone(drone_dto, &sqlx_connection, &tx).await;
                             drone.set_in_db(true, inserted_drone.id);
                         } else {
-                            if message_type == 2 {
+                            if message_type == 2 || message_type == 4 {
                                 insert_drone(drone_dto, &sqlx_connection, &tx).await;
                             } 
 
