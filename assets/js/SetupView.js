@@ -1,6 +1,6 @@
 import { defineComponent, ref } from "vue";
 import { storeToRefs } from "pinia";
-import { useStore } from "./Store.js";
+import { useStore } from "/assets/js/Store.js";
 
 export default defineComponent({
   name: "SetupView",

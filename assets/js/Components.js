@@ -1,8 +1,8 @@
 import { computed, defineComponent, ref } from "vue";
 import { CustomControl } from "vue3-google-map";
 import { storeToRefs } from "pinia";
-import { useStore } from "./Store.js";
-import { getInterfaces } from "./Api.js";
+import { useStore } from "/assets/js/Store.js";
+import { getInterfaces } from "/assets/js/Api.js";
 
 // Active Drone List
 

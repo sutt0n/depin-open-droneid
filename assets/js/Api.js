@@ -1,4 +1,4 @@
-import { useStore } from "./Store.js";
+import { useStore } from "/assets/js/Store.js";
 
 class Drone {
   constructor(drone) {
@@ -21,9 +21,20 @@ const getJsonResponse = async (url) => {
 const getDrones = async (url) =>
   (await getJsonResponse(url)).map((it) => new Drone(it));
 
-export const getSettings = async () => getJsonResponse("/api/settings");
-export const getInterfaces = async () =>
-  getJsonResponse("/api/settings/interfaces");
+export const getSettings = async () => {
+  return {
+    google_maps_api_key: "AIzaSyDw7jvT605sN74PTADZogMb8IA3cVacbxU",
+    activity_offset_in_m: 10,
+    drone_size_in_rem: 5,
+    interfaces: ["en0", "lo0"],
+    performance_mode: true,
+  };
+};
+//getJsonResponse("/api/settings");
+export const getInterfaces = async () => {
+  return [];
+};
+// getJsonResponse("/api/settings/interfaces");
 export const getActiveDrones = async () => getDrones("/api/drones/active");
 export const getAllDrones = async () => getDrones("/api/drones/all");
 export const getHistory = async (serial_number) =>
@@ -53,9 +64,9 @@ export const postSettings = async (settings) => {
 export const initWebSocket = () => {
   const store = useStore();
   const { updateDrone } = store;
-  const ws = new WebSocket(`ws://${window.location.host}/ws`);
+  const ws = new WebSocket(`ws://${window.location.host}/api/stream`);
   ws.onmessage = (event) => {
-    const drone = new Drone(JSON.parse(event.data));
+    const drone = new Drone(JSON.parse(event.data).drone);
     updateDrone(drone);
   };
 };

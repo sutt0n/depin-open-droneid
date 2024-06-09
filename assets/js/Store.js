@@ -1,6 +1,6 @@
 import { computed, ref } from "vue";
 import { defineStore } from "pinia";
-import * as api from "./Api.js";
+import * as api from "/assets/js/Api.js";
 
 const merge = (loaded, stored) => ({
   ...loaded,

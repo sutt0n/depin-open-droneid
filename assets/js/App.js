@@ -1,9 +1,9 @@
 import { computed, defineComponent, onMounted } from "vue";
 import { storeToRefs } from "pinia";
-import { useStore } from "./Store.js";
-import { initWebSocket } from "./Api.js";
-import MapView from "./MapView.js";
-import SetupView from "./SetupView.js";
+import { useStore } from "/assets/js/Store.js";
+import { initWebSocket } from "/assets/js/Api.js";
+import MapView from "/assets/js/MapView.js";
+import SetupView from "/assets/js/SetupView.js";
 
 export default defineComponent({
   components: { MapView, SetupView },

@@ -1,8 +1,8 @@
 import { computed, defineComponent } from "vue";
 import { CustomMarker, Marker, Polyline } from "vue3-google-map";
 import { storeToRefs } from "pinia";
-import { DroneInfo } from "./Components.js";
-import { useStore } from "./Store.js";
+import { DroneInfo } from "/assets/js/Components.js";
+import { useStore } from "/assets/js/Store.js";
 
 const COLORS = [
   { hex: "#F44336", hue: "295deg" },
