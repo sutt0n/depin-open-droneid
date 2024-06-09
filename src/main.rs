@@ -73,7 +73,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             .await
             .unwrap();
 
-        let _ = axum::serve(listener, router);
+        let _ = axum::serve(listener, router).await.unwrap();
 
         println!("Server running on 3001");
     });
