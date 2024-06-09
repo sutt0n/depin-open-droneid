@@ -50,15 +50,15 @@ export default defineComponent({
                     :style="{'--size': droneSize, '--color': color.hex, '--hue': color.hue}"
                     @click="selectDrone(drone.serial_number)">
                   <div class="overlay"></div>
-                  <img src="/img/body.svg" class="droneBody" />
-                  <img src="/img/prop.svg" class="prop prop1" />
-                  <img src="/img/prop.svg" class="prop prop2" />
-                  <img src="/img/prop.svg" class="prop prop3" />
-                  <img src="/img/prop.svg" class="prop prop4" />
+                  <img src="/assets/img/body.svg" class="droneBody" />
+                  <img src="/assets/img/prop.svg" class="prop prop1" />
+                  <img src="/assets/img/prop.svg" class="prop prop2" />
+                  <img src="/assets/img/prop.svg" class="prop prop3" />
+                  <img src="/assets/img/prop.svg" class="prop prop4" />
                 </div>
                 <img 
                     v-else 
-                    src="/img/drone.png" 
+                    src="/assets/img/drone.png" 
                     :style="{width: droneSize}"
                     :class="{highlight: drone.focused, lowlight: drone.blurred}"
                     @click="selectDrone(drone.serial_number)"
