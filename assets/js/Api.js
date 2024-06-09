@@ -64,7 +64,7 @@ export const postSettings = async (settings) => {
 export const initWebSocket = () => {
   const store = useStore();
   const { updateDrone } = store;
-  const ws = new WebSocket(`ws://${window.location.host}/api/stream`);
+  const ws = new WebSocket(`http://${window.location.host}/api/stream`);
   ws.onmessage = (event) => {
     const drone = new Drone(JSON.parse(event.data).drone);
     updateDrone(drone);
