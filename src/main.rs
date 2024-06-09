@@ -31,21 +31,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .unwrap();
 
-    let (_, session) = BluetoothSession::new().await?;
-    let mut events = session.event_stream().await?;
-    session
-        .start_discovery_with_filter(&DiscoveryFilter {
-            duplicate_data: Some(true),
-            ..DiscoveryFilter::default()
-        })
-        .await?;
-
     let (router, tx) = router::init_router(sqlx_connection.clone());
 
     // Spawn a task to handle bluetooth events
     let bt_task = tokio::spawn(async move {
+        let (_, session) = BluetoothSession::new().await.unwrap();
+        let mut events = session.event_stream().await.unwrap();
+        session
+            .start_discovery_with_filter(&DiscoveryFilter {
+                duplicate_data: Some(true),
+                ..DiscoveryFilter::default()
+            })
+            .await
+            .unwrap();
+
         while let Some(event) = events.next().await {
-            if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event) {
+            if let Some(device_id) = handle_bluetooth_event(&mut drones, device_name, event).await {
                 let drone = drones.get_mut(&device_id);
 
                 if drone.is_some() {

@@ -1,4 +1,4 @@
-use ::chrono::{Utc, DateTime};
+use ::chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::drone::Drone;
@@ -98,7 +98,7 @@ impl From<Drone> for DroneDto {
             home_latitude,
             home_longitude,
             id,
-            created 
+            created,
         }
     }
 }

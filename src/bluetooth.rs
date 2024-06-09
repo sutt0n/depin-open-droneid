@@ -7,7 +7,7 @@ use crate::{
     parsers::{parse_basic_id, parse_location, parse_operator_id, parse_system_message},
 };
 
-pub fn handle_bluetooth_event(
+pub async fn handle_bluetooth_event(
     drones: &mut HashMap<DeviceId, Drone>,
     device_name: &str,
     event: bluez_async::BluetoothEvent,
@@ -30,7 +30,7 @@ pub fn handle_bluetooth_event(
                     if drone.is_none() {
                         let drone = Drone::new(None, None, None, None);
                         drones.insert(id.clone(), drone);
-                    } 
+                    }
 
                     match data[0] {
                         0x0D => {
