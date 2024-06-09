@@ -66,7 +66,7 @@ export const initWebSocket = () => {
   const { updateDrone } = store;
   const sse = new EventSource(`http://${window.location.host}/api/stream`);
   sse.onmessage = (event) => {
-    console.log("event", event);
+    console.log("event", JSON.parse(event.data).drone);
     const drone = new Drone(JSON.parse(event.data).drone);
     updateDrone(drone);
   };
