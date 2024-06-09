@@ -45,6 +45,7 @@ pub async fn get_all_drones(State(state): State<AppState>) -> Result<impl IntoRe
 }
 
 pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream) {
+    let drone_copy = drone.clone();
     let _ = sqlx::query(
         "UPDATE drones SET
         serial_number = $1,
@@ -78,6 +79,7 @@ pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 
     let _ = tx.send(DroneUpdate {
         mutation_kind: MutationKind::Update,
+        drone: drone_copy,
         id: drone.id,
     });
 }
@@ -112,6 +114,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 
     let _ = tx.send(DroneUpdate {
         mutation_kind: MutationKind::Create,
+        drone: drone.clone(),
         id: drone.id,
     });
 

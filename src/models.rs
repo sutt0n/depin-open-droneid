@@ -12,6 +12,7 @@ pub enum MutationKind {
 #[derive(Clone, Serialize, Debug)]
 pub struct DroneUpdate {
     pub mutation_kind: MutationKind,
+    pub drone: DroneDto,
     pub id: i32,
 }
 
