@@ -72,7 +72,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Run both tasks concurrently
-    tokio::join!(bt_task, start_webserver(router));
+    let (_, _) = tokio::join!(
+        bt_task, 
+        start_webserver(router)
+    );
 
     Ok(())
 }
