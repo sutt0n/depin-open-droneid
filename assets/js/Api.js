@@ -68,7 +68,7 @@ export const initWebSocket = () => {
   let ws = null;
 
   const connect = () => {
-    ws = new WebSocket(`ws://${window.location.host}/api/stream`);
+    ws = new WebSocket(`http://192.168.1.65:3000/api/stream`);
     ws.onmessage = (event) => {
       const drone = new Drone(JSON.parse(event.data).drone);
       updateDrone(drone);
