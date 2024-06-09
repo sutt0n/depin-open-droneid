@@ -12,7 +12,7 @@ pub enum MutationKind {
 #[derive(Clone, Serialize, Debug)]
 pub struct DroneUpdate {
     pub mutation_kind: MutationKind,
-    pub drone: DroneDto,
+    pub drone: DroneSerialized,
     pub id: i32,
 }
 
@@ -31,6 +31,50 @@ pub struct DroneDto {
     pub pilot_longitude: f64,
     pub home_latitude: f64,
     pub home_longitude: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Position {
+    pub lat: f64,
+    pub lng: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DroneSerialized {
+    pub serial_number: String,
+    pub created: DateTime<Utc>,
+    pub altitude: f64,
+    pub x_speed: f64,
+    pub y_speed: f64,
+    pub yaw: f64,
+    pub position: Position,
+    pub pilot_position: Position,
+    pub home_position: Position,
+}
+
+impl From<DroneDto> for DroneSerialized {
+    fn from(drone_dto: DroneDto) -> Self {
+        DroneSerialized {
+            serial_number: drone_dto.serial_number,
+            created: drone_dto.created,
+            altitude: drone_dto.altitude,
+            x_speed: drone_dto.x_speed,
+            y_speed: drone_dto.y_speed,
+            yaw: drone_dto.yaw,
+            position: Position {
+                lat: drone_dto.latitude,
+                lng: drone_dto.longitude,
+            },
+            pilot_position: Position {
+                lat: drone_dto.pilot_latitude,
+                lng: drone_dto.pilot_longitude,
+            },
+            home_position: Position {
+                lat: drone_dto.home_latitude,
+                lng: drone_dto.home_longitude,
+            },
+        }
+    }
 }
 
 impl From<Drone> for DroneDto {

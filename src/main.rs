@@ -51,7 +51,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Scanning for Bluetooth advertisement data.");
 
         while let Some(event) = events.next().await {
-            if let Some((device_id, message_type)) = handle_bluetooth_event(&mut drones, device_name, event).await {
+            if let Some((device_id, message_type)) =
+                handle_bluetooth_event(&mut drones, device_name, event).await
+            {
                 let drone = drones.get_mut(&device_id);
 
                 if drone.is_some() {
@@ -66,7 +68,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         } else {
                             if message_type == 2 || message_type == 4 {
                                 insert_drone(drone_dto, &sqlx_connection, &tx).await;
-                            } 
+                            }
                         }
                     }
                 }
@@ -75,10 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Run both tasks concurrently
-    let (_, _) = tokio::join!(
-        bt_task, 
-        start_webserver(router)
-    );
+    let (_, _) = tokio::join!(bt_task, start_webserver(router));
 
     Ok(())
 }

@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{State, WebSocketUpgrade},
     http::StatusCode,
     response::{sse::Event, IntoResponse, Response, Sse},
     Extension,
@@ -83,7 +83,7 @@ pub async fn update_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 
     let _ = tx.send(DroneUpdate {
         mutation_kind: MutationKind::Update,
-        drone: drone_copy,
+        drone: drone_copy.into(),
         id: drone.id,
     });
 }
@@ -118,7 +118,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 
     let _ = tx.send(DroneUpdate {
         mutation_kind: MutationKind::Create,
-        drone: drone.clone(),
+        drone: drone.clone().into(),
         id: drone.id,
     });
 
@@ -126,6 +126,7 @@ pub async fn insert_drone(drone: DroneDto, db: &sqlx::PgPool, tx: &DronesStream)
 }
 
 pub async fn handle_stream(
+    ws: WebSocketUpgrade,
     Extension(tx): Extension<DronesStream>,
 ) -> Sse<impl Stream<Item = Result<Event, Infallible>>> {
     let rx = tx.subscribe();
