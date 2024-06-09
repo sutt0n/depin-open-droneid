@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::net::SocketAddr;
 
+use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
 use futures::stream::StreamExt;
 use models::DroneDto;
@@ -69,21 +71,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
-    // Spawn a task to serve axum
-    let webserver_task = tokio::spawn(async move {
-        let listener = tokio::net::TcpListener::bind("127.0.0.1:3001")
-            .await
-            .unwrap();
-
-        println!("About to serve axum");
-
-        let _ = axum::serve(listener, router).await;
-
-        println!("Server running on 3001");
-    });
-
     // Run both tasks concurrently
-    tokio::try_join!(bt_task, webserver_task)?;
+    tokio::join!(bt_task, start_webserver(router));
 
     Ok(())
+}
+
+async fn start_webserver(router: Router) {
+    let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+
+    println!("About to serve axum");
+
+    let _ = axum::serve(listener, router).await.unwrap();
+
+    println!("Server running on 3001");
 }
