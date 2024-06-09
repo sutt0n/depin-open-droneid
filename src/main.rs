@@ -16,6 +16,7 @@ mod models;
 mod parsers;
 mod router;
 mod routes;
+mod templates;
 
 use crate::bluetooth::handle_bluetooth_event;
 use crate::drone::Drone;

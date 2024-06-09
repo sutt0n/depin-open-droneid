@@ -10,11 +10,15 @@ use std::time::Duration;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt as _};
 
-use crate::{errors::ApiError, router::AppState};
+use crate::{errors::ApiError, router::AppState, templates};
 use crate::{
     models::{DroneDto, DroneUpdate, MutationKind},
     router::DronesStream,
 };
+
+pub async fn home() -> impl IntoResponse {
+    templates::HomeTemplate
+}
 
 pub async fn get_active_drones(
     State(state): State<AppState>,
@@ -132,7 +136,7 @@ pub async fn handle_stream(
         stream
             .map(|msg| {
                 let msg = msg.unwrap();
-                let json = format!("<div>{}</div>", json!(msg));
+                let json = format!("{}", json!(msg));
                 Event::default().data(json)
             })
             .map(Ok),

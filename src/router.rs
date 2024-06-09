@@ -23,6 +23,7 @@ pub fn init_router(db: PgPool) -> (Router, DronesStream) {
 
     (
         Router::new()
+            .route("/", get(routes::home))
             .route("/api/drones/active", get(routes::get_active_drones))
             .route("/api/drones/all", get(routes::get_all_drones))
             .route("/api/stream", get(routes::handle_stream))
