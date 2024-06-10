@@ -27,7 +27,7 @@ export const getSettings = async () => {
     activity_offset_in_m: 10,
     drone_size_in_rem: 5,
     interfaces: ["en0", "lo0"],
-    performance_mode: true,
+    performance_mode: false,
   };
 };
 //getJsonResponse("/api/settings");
