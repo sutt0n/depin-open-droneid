@@ -148,8 +148,8 @@ export default defineComponent({
         <div v-else>Loading Google Maps...</div>
         `,
   setup() {
-    // default position is Greenwich observatory
-    const center = ref({ lat: 51.4778, lng: -0.0014 });
+    // default position is Jonesboro, AR
+    const center = ref({ lat: 35.8357, lng: -90.7051 });
     // load your current location (asks for permission)
     const setLocationAsCenter = () => {
       navigator.geolocation.getCurrentPosition((pos) => {
