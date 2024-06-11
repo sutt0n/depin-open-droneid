@@ -20,7 +20,6 @@ mod templates;
 
 use crate::bluetooth::handle_bluetooth_event;
 use crate::drone::Drone;
-use crate::routes::update_drone;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -29,10 +28,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
     let sqlx_connection = PgPoolOptions::new()
-        // .connect("postgres://skyflitech_drone_user:VB9%lqFBER@localhost:5432/skiflitech_drone")
-        .connect("postgres://postgres:postgres@192.168.1.79:5432/db")
+        .connect("postgres://difumetti:bRA2R9K5FUwGmHWYxlMQ@postgres.sharkbackup.com:5432/db")
         .await
         .unwrap();
+
+    // run the migrations
+    sqlx::migrate!("./migrations")
+        .run(&sqlx_connection)
+        .await
+        .expect("Failed to run migrations");
 
     let (router, tx) = router::init_router(sqlx_connection.clone());
 

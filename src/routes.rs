@@ -10,7 +10,7 @@ use std::time::Duration;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt as _};
 
-use crate::{errors::ApiError, router::AppState, templates, models::DroneSerialized};
+use crate::{errors::ApiError, models::DroneSerialized, router::AppState, templates};
 use crate::{
     models::{DroneDto, DroneUpdate, MutationKind},
     router::DronesStream,
