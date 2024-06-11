@@ -33,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .unwrap();
 
     // run the migrations
-    sqlx::migrate!("./migrations")
+    sqlx::migrate!()
         .run(&sqlx_connection)
         .await
         .expect("Failed to run migrations");
