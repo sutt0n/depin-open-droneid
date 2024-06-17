@@ -27,10 +27,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
-    let sqlx_connection = PgPoolOptions::new()
-        .connect("postgres://difumetti:bRA2R9K5FUwGmHWYxlMQ@postgres.sharkbackup.com:5432/db")
-        .await
-        .unwrap();
+    let conn_url = std::env::var("DATABASE_URL")
+        .expect("Env var DATABASE_URL is required for this example.");
+
+    let sqlx_connection = sqlx::PgPool::connect(&conn_url).await.unwrap();
 
     // run the migrations
     sqlx::migrate!()
