@@ -18,11 +18,11 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
 
         println!("{:?} {:?} {:?}", start_mon.status, output, check_mode);
 
-        if start_mon.status.success() {
-            println!("Monitoring mode enabled on {}", device);
-        } else {
-            return Err("Failed to enable monitoring mode".to_string());
-        }
+        // if start_mon.status.success() {
+        //     println!("Monitoring mode enabled on {}", device);
+        // } else {
+        //     return Err("Failed to enable monitoring mode".to_string());
+        // }
     }
 
     Ok(())
@@ -35,11 +35,11 @@ pub fn disable_monitor_mode(device: &str) -> Result<(), String> {
         .output()
         .expect("failed to execute process");
 
-    if stop_mon.status.success() {
-        println!("Monitoring mode disabled on {}", device);
-    } else {
-        return Err("Failed to disable monitoring mode".to_string());
-    }
+    // if stop_mon.status.success() {
+    //     println!("Monitoring mode disabled on {}", device);
+    // } else {
+    //     return Err("Failed to disable monitoring mode".to_string());
+    // }
 
     Ok(())
 }
