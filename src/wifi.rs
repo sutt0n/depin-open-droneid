@@ -16,7 +16,7 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
             .output()
             .expect("failed to execute process");
 
-        println!("{:?} {:?}", start_mon.status, output);
+        println!("{:?} {:?} {:?}", start_mon.status, output, check_mode);
 
         if start_mon.status.success() {
             println!("Monitoring mode enabled on {}", device);
