@@ -26,7 +26,7 @@ use crate::drone::Drone;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let device_name = "hci0";
-    let wifi_device_name = "wlx98254aed7e95";
+    let wifi_device_name = "wlx1c4bd66dc200";
 
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
