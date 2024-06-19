@@ -9,7 +9,7 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
 
     let output = String::from_utf8_lossy(&check_mode.stdout);
 
-    if !output.contains("Monitor mode enabled") {
+    if !output.contains("Mode:Monitor") {
         // Enable monitoring mode using airmon-ng
         let start_mon = SysCommand::new("sudo")
             .args(["airmon-ng", "start", device])
