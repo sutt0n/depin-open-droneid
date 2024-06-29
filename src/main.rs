@@ -69,6 +69,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let data = packet.data;
         
             println!("data: {:?}", data);
+
+            // convert bytes to string (attempt)
+            let data_str = std::str::from_utf8(&data).unwrap();
+            println!("data_str: {:?}", data_str);
         });
     });
     //
