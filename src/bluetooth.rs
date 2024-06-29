@@ -34,6 +34,8 @@ pub async fn handle_bluetooth_event(
                         drones.insert(id.clone(), drone);
                     }
 
+                    let clone_data = data.clone();
+
                     match data[0] {
                         0x0D => {
                             // skip first two bytes
@@ -48,20 +50,25 @@ pub async fn handle_bluetooth_event(
 
                             match message_type {
                                 0 => {
+                                    println!("Basic ID {:?}", clone_data);
                                     let basic_id = parse_basic_id(data);
                                     drones.get_mut(&id).unwrap().update_basic_id(basic_id);
                                 }
                                 1 => {
+                                    println!("Location {:?}", clone_data);
                                     let location = parse_location(data);
                                     drones.get_mut(&id).unwrap().update_location(location);
                                 }
                                 3 => {
+                                    println!("Self ID {:?}", clone_data);
                                     println!("Self ID message");
                                 }
                                 2 => {
+                                    println!("Self ID {:?}", clone_data);
                                     println!("Auth message");
                                 }
                                 4 => {
+                                    println!("System Message {:?}", clone_data);
                                     let system_message = parse_system_message(data);
                                     drones
                                         .get_mut(&id)
@@ -69,6 +76,7 @@ pub async fn handle_bluetooth_event(
                                         .update_system_message(system_message);
                                 }
                                 5 => {
+                                    println!("Operator ID {:?}", clone_data);
                                     let operator = parse_operator_id(data);
                                     drones.get_mut(&id).unwrap().update_operator(operator);
                                 }
