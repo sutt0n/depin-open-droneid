@@ -44,6 +44,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wifi_task = tokio::spawn(async move {
         let wifi_card: &str = "wlx08beac26e3e8";
 
+        if let Err(e) = enable_monitor_mode(wifi_card) {
+            eprintln!("Error: {}", e);
+            return;
+        }
+
+        println!("Using device: {}", wifi_card);
+
         let cap = Capture::from_device(wifi_card).unwrap()
             .rfmon(true)
             .open();
