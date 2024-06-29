@@ -44,12 +44,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wifi_task = tokio::spawn(async move {
         let wifi_card: &str = "wlx08beac26e3e8";
 
-        let mut cap = Capture::from_device(wifi_card).unwrap()
-            .promisc(true)
+        let cap = Capture::from_device(wifi_card).unwrap()
+            .rfmon(true)
             .open();
 
         if let Err(e) = cap {
-            eprintln!("error opening device \"{}\": {}", device_name, e);
+            eprintln!("error opening device \"{}\": {}", wifi_card, e);
             let devices = Device::list().unwrap();
             let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
 
