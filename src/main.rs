@@ -51,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Using device: {}", wifi_card);
 
         let cap = Capture::from_device(wifi_card).unwrap()
-            .promisc(true)
+            .rfmon(true)
             .open();
 
         if let Err(e) = cap {
