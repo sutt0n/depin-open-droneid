@@ -1370,6 +1370,7 @@ dependencies = [
  "libloading",
  "pkg-config",
  "regex",
+ "tokio",
  "windows-sys 0.36.1",
 ]
 

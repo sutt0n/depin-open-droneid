@@ -3,13 +3,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
-use futures::stream::StreamExt;
-use models::DroneDto;
 use pcap::{Capture, Device};
-use routes::insert_drone;
-use pnet::datalink::{ self, NetworkInterface, Channel::Ethernet};
-use simple_wifi::*;
-use std::process;
 
 mod bluetooth;
 mod drone;
@@ -49,49 +43,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let wifi_task = tokio::spawn(async move {
         let wifi_card: &str = "wlx08beac26e3e8";
-        
-            // Finding the interface that matches the wifi_card. So it can be used for sniffing.
-            let interface: NetworkInterface = datalink::interfaces()
-                .into_iter()
-                .filter(|iface: &NetworkInterface| iface.name == wifi_card)
-                .next()
-                .unwrap();
-        
-            // Setting up the channel to the interface so you can sniff Wi-Fi packets.
-            let (_, mut rx) = match datalink::channel(&interface, Default::default()) {
-                Ok(Ethernet(tx, rx)) => (tx, rx),
-                Ok(_) => {
-                    println!("\x1b[38;5;9mUnhandled channel type\x1b[0m");
-                    process::exit(0);
-                },
-                Err(e) => {
-                    println!("\x1b[38;5;9mAn error occurred when creating the datalink channel: {e}\x1b[0m");
-                    process::exit(0);
-                }
-        
-            };
 
-        loop {
-            let pkt: &[u8] = match rx.next() {
-                Ok(pkt) => pkt,
-                Err(_) => continue
-            };
+        let mut cap = Capture::from_device(wifi_card).unwrap()
+            .promisc(true)
+            .open();
 
-            let pkt_info: Packet = match Packet::new(pkt) {
-                Ok(t) => t,
-                Err(e) => {
-                    println!("\x1b[38;5;9m{e}\x1b[0m");
-                    let _ = write_pcap(&pkt.to_vec(), "/home/user/error.pcap");
-                    continue;
-                }
-            };
+        if let Err(e) = cap {
+            eprintln!("error opening device \"{}\": {}", device_name, e);
+            let devices = Device::list().unwrap();
+            let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
 
-            println!("{pkt_info:#?}");
-            println!(
-                "Address1: {}, Address2: {}\nAddress3: {}, Address4: {}",
-                pkt_info.addr1, pkt_info.addr2, pkt_info.addr3, pkt_info.addr4
-            )
+            eprintln!("available devices: {:?}", device_names);
+            return;
         }
+
+        let mut cap = cap.unwrap().setnonblock().unwrap();
+
+        let _ = cap.for_each(None, |packet| {
+            let data = packet.data;
+        
+            println!("data: {:?}", data);
+        });
     });
     //
     // Spawn a task to handle bluetooth events
