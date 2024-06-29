@@ -25,6 +25,12 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
         // }
     }
 
+    // Change channel to 6
+    let _ = SysCommand::new("iwconfig")
+        .args([device, "channel", "6"])
+        .output()
+        .expect("failed to execute process");
+
     Ok(())
 }
 
