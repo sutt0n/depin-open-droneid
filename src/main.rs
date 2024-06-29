@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 
     let wifi_task = tokio::spawn(async move {
-        let wifi_card: &str = "enp1s0";
+        let wifi_card: &str = "wlx08beac26e3e8";
         
             // Finding the interface that matches the wifi_card. So it can be used for sniffing.
             let interface: NetworkInterface = datalink::interfaces()
