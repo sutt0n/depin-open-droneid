@@ -71,7 +71,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("data: {:?}", data);
 
             // convert bytes to string (attempt)
-            let data_str = std::str::from_utf8(&data).unwrap();
+            let data_str = String::from_utf8_lossy(&data);
             println!("data_str: {:?}", data_str);
         });
     });
