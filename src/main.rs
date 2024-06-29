@@ -40,7 +40,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (router, tx) = router::init_router(sqlx_connection.clone());
 
-
     let wifi_task = tokio::spawn(async move {
         let wifi_card: &str = "wlx08beac26e3e8";
 
@@ -52,7 +51,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("Using device: {}", wifi_card);
 
         let cap = Capture::from_device(wifi_card).unwrap()
-            .rfmon(true)
+            .promisc(true)
             .open();
 
         if let Err(e) = cap {
