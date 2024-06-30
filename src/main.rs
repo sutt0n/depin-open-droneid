@@ -90,7 +90,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Ok(frame) => Some(frame),
                 Err(err) => {
                     println!("Error during parsing :\n{err}");
-                        println!("LE DATAS {data:?}");
+                    println!("LE DATAS {data:?}");
+                    println!("LE DATAS STRING {:?}", String::from_utf8_lossy(&data));
                     if let libwifi::error::Error::Failure(_, data) = err {
                         println!("{data:?}");
                     }
