@@ -2522,6 +2522,7 @@ dependencies = [
  "clap",
  "futures",
  "libwifi",
+ "nom",
  "packed_struct",
  "pcap",
  "pnet",
