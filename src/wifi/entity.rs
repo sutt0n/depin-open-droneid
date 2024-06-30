@@ -1,10 +1,3 @@
-extern crate packed_struct;
-use nom::bytes::complete::take;
-use nom::number::complete::{le_u16, le_u8};
-use nom::IResult;
-use radiotap::Radiotap;
-use std::convert::TryInto;
-
 pub const WIFI_ALLIANCE_OUI: [u8; 3] = [0x50, 0x6f, 0x9a];
 pub const NAN_SERVICE_ID: [u8; 6] = [0x88, 0x69, 0x19, 0x9d, 0x92, 0x09];
 
@@ -41,10 +34,8 @@ pub struct ServiceDescriptorAttribute<'a> {
 
 #[derive(Debug)]
 pub struct OpenDroneIDMessagePack {
-    // 4 bits
-    pub message_type: u8,
-    // 4 bits
-    pub version: u8,
+    pub message_type: u8, // 4 bits
+    pub version: u8, // 4 bits
     pub single_msg_size: u8,
     pub num_messages: u8,
     pub messages: Vec<OpenDroneIDMessage>,
@@ -57,131 +48,19 @@ pub struct OpenDroneIDMessage {
     pub message_body: [u8; 25],
 }
 
-pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
-    let (input, message_type_and_version) = le_u8(input)?;
-    let message_type = message_type_and_version >> 4;
-    let version = message_type_and_version & 0x0F;
-
-    let (input, single_msg_size) = le_u8(input)?;
-    let (input, num_messages) = le_u8(input)?;
-
-    let mut messages = Vec::new();
-
-    for _ in 0..num_messages {
-        let (input, message_type_and_version) = le_u8(input)?;
-        let message_type = message_type_and_version >> 4;
-        let version = message_type_and_version & 0x0F;
-
-        let (_, message_body) = take(25usize)(input)?;
-
-        messages.push(OpenDroneIDMessage {
-            message_type,
-            version,
-            message_body: message_body.try_into().unwrap(),
-        });
-    }
-
-    Ok((
-        input,
-        OpenDroneIDMessagePack {
-            message_type,
-            version,
-            single_msg_size,
-            num_messages,
-            messages,
-        },
-    ))
-}
-
-pub fn parse_service_descriptor_attribute(input: &[u8]) -> IResult<&[u8], ServiceDescriptorAttribute> {
-    let (input, attribute_id) = le_u8(input)?;
-    let (input, attribute_length) = le_u16(input)?;
-    let (input, service_id) = take(6usize)(input)?;
-    let (input, instance_id) = le_u8(input)?;
-    let (input, requestor_id) = le_u8(input)?;
-    let (input, service_control) = le_u8(input)?;
-    let (input, service_info_length) = le_u8(input)?;
-    let (input, message_counter) = le_u8(input)?;
-    let (input, service_info) = take(service_info_length - 1)(input)?;
-
-    Ok((
-        input,
-        ServiceDescriptorAttribute {
-            attribute_id,
-            attribute_length,
-            service_id: service_id.try_into().unwrap(),
-            instance_id,
-            requestor_id,
-            service_control,
-            service_info_length,
-            message_counter,
-            service_info,
-        },
-    ))
-}
-
-pub fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
-    let (input, frame_control) = le_u16(input)?;
-    let frame_control_version = (frame_control & 0b00000011) as u8;
-    let frame_control_type = ((frame_control & 0b00001100) >> 2) as u8;
-    let frame_control_subtype = ((frame_control & 0b11110000) >> 4) as u8;
-    let (input, duration_id) = le_u16(input)?;
-    let (input, address1) = take(6usize)(input)?;
-    let (input, address2) = take(6usize)(input)?;
-    let (input, address3) = take(6usize)(input)?;
-    let (input, sequence_control) = le_u16(input)?;
-    let (input, category) = take(1usize)(input)?;
-    let (input, action) = take(1usize)(input)?;
-    let (input, oui) = take(3usize)(input)?;
-    let (input, oui_type) = take(1usize)(input)?;
-    let (input, body) = take(input.len())(input)?;
-    
-    Ok((
-        input,
-        ActionFrame {
-            frame_control,
-            frame_control_version,
-            frame_control_type,
-            frame_control_subtype,
-            duration_id,
-            address1,
-            address2,
-            address3,
-            sequence_control,
-            category: category[0],
-            action: action[0],
-            oui: oui.try_into().unwrap(),
-            oui_type: oui_type[0],
-            body,
-        },
-    ))
-}
-
-pub fn remove_radiotap_header(input: &[u8]) -> &[u8] {
-    let radiotap: Option<Radiotap> = match Radiotap::from_bytes(input) {
-        Ok(radiotap) => Some(radiotap),
-        Err(error) => {
-            println!(
-                "Couldn't read packet data with Radiotap: {:?}, error {error:?}",
-                &input
-            );
-            None
-        }
-    };
-
-    if let Some(radiotap) = radiotap {
-        &input[radiotap.header.length..]
-    } else {
-        input
-    }
-}
-
+// todo: move to repo.rs
 #[cfg(test)]
 pub mod tests {
+    use crate::wifi::{
+        parse_action_frame, 
+        remove_radiotap_header, 
+        parse_service_descriptor_attribute, 
+        parse_open_drone_id_message_pack
+    };
+
     use super::*;
     use std::fs::File;
     use std::io::{self, Read, BufReader};
-    use radiotap::Radiotap;
 
     fn read_fixture(file_path: &str) -> io::Result<Vec<u8>> {
         // Open the file
@@ -226,39 +105,6 @@ pub mod tests {
         assert_eq!(action_frame.frame_control_subtype, 0xd);
         assert_eq!(action_frame.oui, WIFI_ALLIANCE_OUI);
         assert_eq!(action_frame.oui_type, 0x13);
-
-        // let open_drone_id_message_pack: Option<OpenDroneIDMessagePack> = match parse_action_frame(payload) {
-        //     Ok((_, frame)) => {
-        //         match parse_service_descriptor_attribute(frame.body) {
-        //             Ok((_, attribute)) => {
-        //                 match parse_open_drone_id_message_pack(attribute.service_info) {
-        //                     Ok((_, message_pack)) => {
-        //                         Some(message_pack)
-        //                     }
-        //                     Err(e) => {
-        //                         eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
-        //                         None
-        //                     },
-        //                 }
-        //             }
-        //             Err(e) => {
-        //                 eprintln!("Failed to parse service descriptor attribute: {:?}", e);
-        //                 None
-        //             }
-        //         }
-        //     }
-        //     Err(e) => {
-        //         eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-        //         None
-        //     }
-        // };
-        //
-        // assert_eq!(open_drone_id_message_pack.is_some(), true);
-        //
-        // let open_drone_id_message_pack = open_drone_id_message_pack.unwrap();
-        //
-        // assert_eq!(open_drone_id_message_pack.message_type, 0xf);
-        // assert_eq!(open_drone_id_message_pack.version, 0x2);
     }
 
     #[test]

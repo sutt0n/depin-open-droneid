@@ -4,8 +4,7 @@ use std::net::SocketAddr;
 use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
 use libwifi::Frame;
-use pcap::{Capture, Device, Packet};
-use radiotap::Radiotap;
+use pcap::{Capture, Device, Linktype};
 
 mod bluetooth;
 mod drone;
@@ -18,7 +17,7 @@ mod routes;
 mod templates;
 mod wifi;
 
-use crate::wifi::enable_monitor_mode;
+use crate::wifi::{enable_monitor_mode, parse_service_descriptor_attribute, remove_radiotap_header, parse_open_drone_id_message_pack, parse_action_frame};
 use crate::bluetooth::handle_bluetooth_event;
 use crate::drone::Drone;
 
@@ -66,74 +65,38 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return;
         }
 
-        cap.as_mut().unwrap().set_datalink(pcap::Linktype(127)).unwrap();
+        cap.as_mut().unwrap().set_datalink(Linktype::IEEE802_11_RADIOTAP).unwrap();
 
         while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
             let data = packet.data;
 
-            let radiotap = match Radiotap::from_bytes(data) {
-                Ok(radiotap) => radiotap,
-                Err(error) => {
-                    println!(
-                        "Couldn't read packet data with Radiotap: {:?}, error {error:?}",
-                        &data
-                    );
-                    return ();
-                }
-            };
+            let payload = remove_radiotap_header(data);
 
-            println!("Radiotap header {:?}", radiotap.header.length);
-
-            let payload = &data[radiotap.header.length..];
-
-            let frame: Option<Frame> = match libwifi::parse_frame(payload) {
-                Ok(frame) => Some(frame),
-                Err(err) => {
-                    println!("Error during parsing :\n{err}");
-                    println!("LE DATAS {data:?}");
-                    println!("LE DATAS STRING {:?}", String::from_utf8_lossy(&data));
-                    if let libwifi::error::Error::Failure(_, data) = err {
-                        println!("{data:?}");
+            let open_drone_id_message_pack = match parse_action_frame(payload) {
+                Ok((_, frame)) => {
+                    match parse_service_descriptor_attribute(frame.body) {
+                        Ok((_, service_descriptor_attribute)) => {
+                            match parse_open_drone_id_message_pack(service_descriptor_attribute.service_info) {
+                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
+                                Err(e) => {
+                                    eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                    continue;
+                                }
+                            }
+                        },
+                        Err(e) => {
+                            eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                            continue;
+                        }
                     }
-                    None
+                },
+                Err(e) => {
+                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                    continue;
                 }
             };
 
-            if frame.is_none() {
-                continue;
-            }
-
-            let frame = frame.unwrap();
-
-            let beacon_frame = match frame {
-                Frame::Beacon(frame) => Some(frame),
-                Frame::ProbeRequest(_) => None,
-                Frame::ProbeResponse(_) => None,
-                Frame::AssociationRequest(_) => None,
-                Frame::AssociationResponse(_) => None,
-                Frame::Rts(_) => None,
-                Frame::Cts(_) => None,
-                Frame::Ack(_) => None,
-                Frame::BlockAckRequest(_) => None,
-                Frame::BlockAck(_) => None,
-                Frame::Data(_) => None,
-                Frame::NullData(_) => None,
-                Frame::QosData(_) => None,
-                Frame::QosNull(_) => None, 
-            };
-
-            if beacon_frame.is_none() {
-                continue;
-            }
-
-            let beacon_frame = beacon_frame.unwrap();
-
-            println!("Beacon frame: {:?}", beacon_frame.station_info);
-            println!("Beacon frame: {:?}", beacon_frame.header);
-
-            // convert bytes to string (attempt)
-            let data_str = String::from_utf8_lossy(&data);
-            println!("data_str: {:?}", data_str);
+            println!("{:?}", open_drone_id_message_pack);
         }
     });
     //
