@@ -3,7 +3,9 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
+use libwifi::Frame;
 use pcap::{Capture, Device, Packet};
+use radiotap::Radiotap;
 
 mod bluetooth;
 mod drone;
@@ -68,8 +70,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let _ = cap.for_each(None, |packet: Packet| {
             let data = packet.data;
-        
-            println!("data: {:?}", data);
+
+            let radiotap = match Radiotap::from_bytes(data) {
+                Ok(radiotap) => radiotap,
+                Err(error) => {
+                    println!(
+                        "Couldn't read packet data with Radiotap: {:?}, error {error:?}",
+                        &data
+                    );
+                    return ();
+                }
+            };
+
+            println!("Radiotap header {:?}", radiotap.header.length);
+
+            let payload = &data[radiotap.header.length..];
+
+            let frame: Option<Frame> = match libwifi::parse_frame(payload) {
+                Ok(frame) => Some(frame),
+                Err(err) => {
+                    println!("Error during parsing :\n{err}");
+                    if let libwifi::error::Error::Failure(_, data) = err {
+                        println!("{data:?}");
+                    }
+                    None
+                }
+            };
+
+            if frame.is_none() {
+                return;
+            }
+
+            let frame = frame.unwrap();
+
+            let beacon_frame = match frame {
+                Frame::Beacon(frame) => Some(frame),
+                Frame::ProbeRequest(_) => None,
+                Frame::ProbeResponse(_) => None,
+                Frame::AssociationRequest(_) => None,
+                Frame::AssociationResponse(_) => None,
+                Frame::Rts(_) => None,
+                Frame::Cts(_) => None,
+                Frame::Ack(_) => None,
+                Frame::BlockAckRequest(_) => None,
+                Frame::BlockAck(_) => None,
+                Frame::Data(_) => None,
+                Frame::NullData(_) => None,
+                Frame::QosData(_) => None,
+                Frame::QosNull(_) => None, 
+            };
+
+            if beacon_frame.is_none() {
+                return;
+            }
 
             // convert bytes to string (attempt)
             let data_str = String::from_utf8_lossy(&data);
