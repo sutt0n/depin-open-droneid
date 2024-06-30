@@ -1,46 +1,62 @@
+extern crate packed_struct;
 use packed_struct::prelude::*;
-use serde::{Deserialize, Deserializer};
-use serde_bytes::ByteBuf;
+use std::convert::TryInto;
 
-#[derive(Clone, Debug, Deserialize)]
-pub struct NanServiceDiscoveryFrame {
-    pub category: u8,
-    pub action: u8,
-    pub oui: [u8; 3],
-    pub oui_type: u8,
-    // pub nan_attributes: ByteBuf,
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct NanServiceDescriptorAttribute {
-    pub attribute_id: u8,
-    pub length: u16,
-    pub service_id: [u8; 6],
-    pub instance_id: u8,
-    pub requestor_instance_id: u8,
-    pub service_control: u8,
-    pub service_info_length: u8,
-    pub message_counter: u8,
-    pub service_info: ByteBuf, 
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct OpenDroneIDMessagePack {
-    pub msg_type: u8,
-    pub version: u8,
-    pub single_msg_size: u8,
-    pub num_of_msgs_in_pack: u8,
-    pub messages: ByteBuf,
-}
-
-#[derive(PackedStruct)]
-#[packed_struct(bit_numbering = "msb0")]
-pub struct OpenDroneIdMessage {
-    #[packed_field(bits = "0..=3", ty = "enum")]
-    pub msg_type: DroneMessageType,
+#[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0", endian = "lsb")]
+pub struct IEEE80211Header {
+    #[packed_field(bits = "0..=1")]
+    protocol_version: u8,
+    #[packed_field(bits = "2..=3")]
+    type_field: u8,
     #[packed_field(bits = "4..=7")]
-    pub version: u8,
-    pub message: [u8; 24],
+    subtype: u8,
+    #[packed_field(bits = "8")]
+    to_ds: bool,
+    #[packed_field(bits = "9")]
+    from_ds: bool,
+    #[packed_field(bits = "10")]
+    more_frag: bool,
+    #[packed_field(bits = "11")]
+    retry: bool,
+    #[packed_field(bits = "12")]
+    power_mgmt: bool,
+    #[packed_field(bits = "13")]
+    more_data: bool,
+    #[packed_field(bits = "14")]
+    protected_frame: bool,
+    #[packed_field(bits = "15")]
+    order: bool,
+}
+
+#[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0", endian = "lsb")]
+pub struct ManagementFrameBody {
+    #[packed_field(bits = "0..=15")]
+    duration: u16,
+    #[packed_field(bits = "16..=63")]
+    receiver_address: [u8; 6],
+    #[packed_field(bits = "64..=111")]
+    transmitter_address: [u8; 6],
+    #[packed_field(bits = "112..=159")]
+    bssid: [u8; 6],
+    #[packed_field(bits = "160..=175")]
+    sequence_control: u16,
+}
+
+#[derive(PackedStruct, Debug)]
+#[packed_struct(bit_numbering = "msb0", endian = "lsb")]
+pub struct ActionFrameHeader {
+    #[packed_field(bits = "0..=7")]
+    category: u8,
+    #[packed_field(bits = "8..=15")]
+    action_code: u8,
+    #[packed_field(bits = "16..=23")]
+    dialog_token: u8,
+    #[packed_field(bits = "24..=31")]
+    nan_type: u8,
+    #[packed_field(bits = "32..=47")]
+    nan_length: u16,
 }
 
 #[derive(PrimitiveEnum_u8, Clone, Copy, Debug, PartialEq)]
@@ -89,24 +105,31 @@ pub mod tests {
         let wifi_data: Vec<u8> = read_fixture("fixtures/wifi_packet_data.txt").unwrap();
 
         // vec<u8> to slice
-        let wifi_data = &wifi_data[..];
+        let frame_data = &wifi_data[..];
 
-        let radiotap = match Radiotap::from_bytes(wifi_data) {
-            Ok(radiotap) => radiotap,
-            Err(error) => {
-                println!(
-                    "Couldn't read packet data with Radiotap: {:?}, error {error:?}",
-                    &wifi_data
-                );
-                return ();
-            }
-        };
+        let radiotap: Option<Radiotap> = match Radiotap::from_bytes(frame_data) {
+        Ok(radiotap) => Some(radiotap),
+        Err(error) => {
+            println!(
+                "Couldn't read packet data with Radiotap: {:?}, error {error:?}",
+                &frame_data
+            );
+            None
+        }
+    };
 
-        println!("Radiotap header {:?}", radiotap.header.length);
+        let payload = &frame_data[radiotap.unwrap().header.length..];
 
-        let payload = &wifi_data[radiotap.header.length..];
+        println!("Radiotap header {:?}", payload);
 
-        // println!("wifi_data: {:?}", frame.header);
+        // let header = IEEE80211Header::unpack(&payload[0..2].try_into().unwrap()).unwrap();
+        // let body = ManagementFrameBody::unpack(&frame_data[2..20].try_into().unwrap()).unwrap();
+        // let action_header = ActionFrameHeader::unpack(&frame_data[20..28].try_into().unwrap()).unwrap();
+
+        // let nan_length = action_header.nan_length as usize;
+        // let nan_data = &frame_data[28..28 + nan_length];
+
+        // println!("wifi_data: {:?}", header);
 
         // let nan_service_discovery_frame: NanServiceDiscoveryFrame = bincode::deserialize(wifi_data).unwrap();
 
