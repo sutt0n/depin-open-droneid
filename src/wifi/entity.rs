@@ -298,4 +298,49 @@ pub mod tests {
         assert_eq!(service_descriptor_attribute.requestor_id, 0x0);
         assert_eq!(service_descriptor_attribute.service_control, 0x10);
     }
+
+    #[test]
+    fn test_parse_open_drone_id_message_pack() {
+        let wifi_data: Vec<u8> = read_fixture("fixtures/wifi_packet_data.txt").unwrap();
+
+        // vec<u8> to slice
+        let frame_data = &wifi_data[..];
+
+        let payload = remove_radiotap_header(frame_data);
+
+        let open_drone_id_message_pack: Option<OpenDroneIDMessagePack> = match parse_action_frame(payload) {
+            Ok((_, frame)) => {
+                match parse_service_descriptor_attribute(frame.body) {
+                    Ok((_, attribute)) => {
+                        match parse_open_drone_id_message_pack(attribute.service_info) {
+                            Ok((_, message_pack)) => {
+                                Some(message_pack)
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                None
+                            },
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                        None
+                    }
+                }
+            },
+            Err(e) => {
+                eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                None
+            }
+        };
+
+        assert_eq!(open_drone_id_message_pack.is_some(), true);
+
+        let open_drone_id_message_pack = open_drone_id_message_pack.unwrap();
+
+        assert_eq!(open_drone_id_message_pack.message_type, 0xf);
+        assert!(open_drone_id_message_pack.version <= 0xf); // 0x0 <= x <= 0xf
+        assert_eq!(open_drone_id_message_pack.single_msg_size, 0x19);
+        assert_eq!(open_drone_id_message_pack.num_messages, 0x4);
+    }
 }
