@@ -124,6 +124,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 return;
             }
 
+            let beacon_frame = beacon_frame.unwrap();
+
+            println!("Beacon frame: {:?}", beacon_frame.station_info);
+            println!("Beacon frame: {:?}", beacon_frame.header);
+
             // convert bytes to string (attempt)
             let data_str = String::from_utf8_lossy(&data);
             println!("data_str: {:?}", data_str);
