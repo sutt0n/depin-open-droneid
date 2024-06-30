@@ -98,7 +98,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             if frame.is_none() {
-                return;
+                continue;
             }
 
             let frame = frame.unwrap();
@@ -121,7 +121,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             if beacon_frame.is_none() {
-                return;
+                continue;
             }
 
             let beacon_frame = beacon_frame.unwrap();
