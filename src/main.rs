@@ -3,7 +3,7 @@ use std::net::SocketAddr;
 
 use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
-use pcap::{Capture, Device};
+use pcap::{Capture, Device, Packet};
 
 mod bluetooth;
 mod drone;
@@ -16,7 +16,7 @@ mod routes;
 mod templates;
 mod wifi;
 
-use crate::wifi::{disable_monitor_mode, enable_monitor_mode};
+use crate::wifi::enable_monitor_mode;
 use crate::bluetooth::handle_bluetooth_event;
 use crate::drone::Drone;
 
@@ -66,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let mut cap = cap.unwrap().setnonblock().unwrap();
 
-        let _ = cap.for_each(None, |packet| {
+        let _ = cap.for_each(None, |packet: Packet| {
             let data = packet.data;
         
             println!("data: {:?}", data);
