@@ -52,7 +52,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!("Using device: {}", wifi_card);
 
-        let cap = Capture::from_device(wifi_card).unwrap()
+        let mut cap = Capture::from_device(wifi_card).unwrap()
             .promisc(true)
             .immediate_mode(true)
             .open();
@@ -66,9 +66,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             return;
         }
 
-        let mut cap = cap.unwrap().setnonblock().unwrap();
+        cap.as_mut().unwrap().set_datalink(pcap::Linktype(127)).unwrap();
 
-        let _ = cap.for_each(None, |packet: Packet| {
+        while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
             let data = packet.data;
 
             let radiotap = match Radiotap::from_bytes(data) {
@@ -132,7 +132,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // convert bytes to string (attempt)
             let data_str = String::from_utf8_lossy(&data);
             println!("data_str: {:?}", data_str);
-        });
+        }
     });
     //
     // Spawn a task to handle bluetooth events
