@@ -1,10 +1,11 @@
+
 use std::collections::HashMap;
 
 use bluez_async::DeviceId;
 
 use crate::{
     drone::Drone,
-    parsers::{parse_basic_id, parse_location, parse_operator_id, parse_system_message},
+    odid::{parse_basic_id, parse_location, parse_operator_id, parse_system_message},
 };
 
 pub type MessageType = u8;
@@ -51,13 +52,21 @@ pub async fn handle_bluetooth_event(
                             match message_type {
                                 0 => {
                                     println!("Basic ID {:?}", clone_data);
-                                    let basic_id = parse_basic_id(data);
-                                    drones.get_mut(&id).unwrap().update_basic_id(basic_id);
+                                    if let Ok((_, basic_id)) = parse_basic_id(data) {
+                                        drones
+                                            .get_mut(&id)
+                                            .unwrap()
+                                            .update_basic_id(basic_id);
+                                    }
                                 }
                                 1 => {
                                     println!("Location {:?}", clone_data);
-                                    let location = parse_location(data);
-                                    drones.get_mut(&id).unwrap().update_location(location);
+                                    if let Ok((_, location)) = parse_location(data) {
+                                        drones
+                                            .get_mut(&id)
+                                            .unwrap()
+                                            .update_location(location);
+                                    }
                                 }
                                 3 => {
                                     println!("Self ID {:?}", clone_data);
@@ -69,16 +78,22 @@ pub async fn handle_bluetooth_event(
                                 }
                                 4 => {
                                     println!("System Message {:?}", clone_data);
-                                    let system_message = parse_system_message(data);
-                                    drones
-                                        .get_mut(&id)
-                                        .unwrap()
-                                        .update_system_message(system_message);
+                                    if let Ok((_, system_message)) = parse_system_message(data) {
+                                        drones
+                                            .get_mut(&id)
+                                            .unwrap()
+                                            .update_system_message(system_message);
+
+                                    }
                                 }
                                 5 => {
                                     println!("Operator ID {:?}", clone_data);
-                                    let operator = parse_operator_id(data);
-                                    drones.get_mut(&id).unwrap().update_operator(operator);
+                                    if let Ok((_, operator)) = parse_operator_id(data) {
+                                        drones
+                                            .get_mut(&id)
+                                            .unwrap()
+                                            .update_operator(operator);
+                                    }
                                 }
                                 0xF => {
                                     println!("Message Pack");

@@ -9,7 +9,7 @@ use sqlx::PgPool;
 use tokio::sync::broadcast::{channel, Sender};
 use tower_http::services::ServeDir;
 
-use crate::{models::DroneUpdate, routes};
+use super::{DroneUpdate, routes};
 
 pub type DronesStream = Sender<DroneUpdate>;
 

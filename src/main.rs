@@ -1,25 +1,25 @@
 use std::collections::HashMap;
-use std::net::SocketAddr;
 
-use axum::Router;
 use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
-use libwifi::Frame;
+use drone::Drone;
 use pcap::{Capture, Device, Linktype};
 
 mod bluetooth;
+mod odid;
 mod drone;
-mod errors;
-mod messages;
-mod models;
-mod parsers;
-mod router;
-mod routes;
-mod templates;
+mod web;
 mod wifi;
 
-use crate::wifi::{enable_monitor_mode, parse_service_descriptor_attribute, remove_radiotap_header, parse_open_drone_id_message_pack, parse_action_frame};
+use wifi::{
+    enable_monitor_mode, 
+    parse_service_descriptor_attribute, 
+    remove_radiotap_header, 
+    parse_open_drone_id_message_pack, 
+    parse_action_frame, 
+    WifiOpenDroneIDMessagePack
+};
+use web::{init_router, start_webserver};
 use crate::bluetooth::handle_bluetooth_event;
-use crate::drone::Drone;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .await
         .expect("Failed to run migrations");
 
-    let (router, tx) = router::init_router(sqlx_connection.clone());
+    let (router, tx) = init_router(sqlx_connection.clone());
 
     let wifi_task = tokio::spawn(async move {
         let wifi_card: &str = "wlx08beac26e3e8";
@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let payload = remove_radiotap_header(data);
 
-            let open_drone_id_message_pack = match parse_action_frame(payload) {
+            let open_drone_id_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
                 Ok((_, frame)) => {
                     match parse_service_descriptor_attribute(frame.body) {
                         Ok((_, service_descriptor_attribute)) => {
@@ -97,9 +97,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             println!("{:?}", open_drone_id_message_pack);
+
+            // todo: parse open drone id message pack and insert into db
         }
     });
-    //
+
     // Spawn a task to handle bluetooth events
     // let bt_task = tokio::spawn(async move {
     //     let (_, session) = BluetoothSession::new().await.unwrap();
@@ -148,13 +150,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-async fn start_webserver(router: Router) {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
-
-    println!("About to serve axum");
-
-    let _ = axum::serve(listener, router).await.unwrap();
-
-    println!("Server running on 3001");
-}

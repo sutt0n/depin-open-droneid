@@ -5,41 +5,47 @@ use radiotap::Radiotap;
 use std::convert::TryInto;
 
 use super::{
-    ActionFrame, 
-    ServiceDescriptorAttribute, 
-    OpenDroneIDMessagePack, 
-    OpenDroneIDMessage
+    WifiActionFrame as ActionFrame, 
+    WifiServiceDescriptorAttribute as ServiceDescriptorAttribute, 
+    WifiOpenDroneIDMessagePack as OpenDroneIDMessagePack, 
+    WifiOpenDroneIDMessage as OpenDroneIDMessage
 };
 
 pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
-    let (input, message_type_and_version) = le_u8(input)?;
-    let message_type = message_type_and_version >> 4;
-    let version = message_type_and_version & 0x0F;
+    let (input, message_type_and_version_pack) = le_u8(input)?;
+    let message_pack_type = message_type_and_version_pack >> 4;
+    let version_pack = message_type_and_version_pack & 0x0F;
 
     let (input, single_msg_size) = le_u8(input)?;
-    let (input, num_messages) = le_u8(input)?;
+    let (mut input, num_messages) = le_u8(input)?;
+
+    println!("length of input: {}", input.len());
 
     let mut messages = Vec::new();
 
-    for _ in 0..num_messages {
-        let (input, message_type_and_version) = le_u8(input)?;
+    for _ in 1..=num_messages {
+        let new_input = input;
+
+        let (new_input, message_type_and_version) = le_u8(new_input)?;
         let message_type = message_type_and_version >> 4;
         let version = message_type_and_version & 0x0F;
 
-        let (_, message_body) = take(25usize)(input)?;
+        let (new_input, message_body) = take(24usize)(new_input)?;
 
         messages.push(OpenDroneIDMessage {
             message_type,
             version,
             message_body: message_body.try_into().unwrap(),
         });
+
+        input = new_input;
     }
 
     Ok((
         input,
         OpenDroneIDMessagePack {
-            message_type,
-            version,
+            message_type: message_pack_type,
+            version: version_pack,
             single_msg_size,
             num_messages,
             messages,

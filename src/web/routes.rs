@@ -10,11 +10,7 @@ use std::time::Duration;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::{Stream, StreamExt as _};
 
-use crate::{errors::ApiError, models::DroneSerialized, router::AppState, templates};
-use crate::{
-    models::{DroneDto, DroneUpdate, MutationKind},
-    router::DronesStream,
-};
+use super::{ApiError, AppState, DroneDto, templates, DroneSerialized, DronesStream, DroneUpdate, MutationKind};
 
 pub async fn home() -> impl IntoResponse {
     templates::HomeTemplate

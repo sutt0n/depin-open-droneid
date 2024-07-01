@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::messages::{BasicId, Location, Operator, SystemMessage};
+use crate::odid::{BasicId, Location, Operator, SystemMessage};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Drone {
