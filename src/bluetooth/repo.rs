@@ -21,15 +21,34 @@ pub fn parse_bluetooth_advertisement_frame(input: &[u8]) -> IResult<&[u8], Bluet
 
 #[cfg(test)]
 pub mod test {
+    use crate::odid::{parse_location, Location};
+
     use super::*;
+    use std::fs::File;
+    use std::io::{self, Read, BufReader};
+
+    fn read_fixture(file_path: &str) -> io::Result<Vec<u8>> {
+        // Open the file
+        let file = File::open(file_path)?;
+        let mut buf_reader = BufReader::new(file);
+    
+        // Read the file content into a string
+        let mut content = String::new();
+        buf_reader.read_to_string(&mut content)?;
+    
+        // Trim the square brackets and split the string by comma
+        let content = content.trim().trim_start_matches('[').trim_end_matches(']');
+        let bytes: Vec<u8> = content
+            .split(',')
+            .map(|s| s.trim().parse().expect("Failed to parse byte"))
+            .collect();
+    
+        Ok(bytes)
+    }
 
     #[test]
     fn test_parse_bluetooth_advertisement_frame() {
-        let input = [
-            13,  // app code
-            77,  // message counter
-            2, 18, 49, 55, 56, 55, 70, 48, 52, 66, 77, 50, 52, 48, 49, 48, 48, 49, 49, 48, 51, 57, 0, 0, 0
-        ];
+        let input = read_fixture("fixtures/bluetooth_location_packet.txt").unwrap();
 
         let bt_advertisement_frame: Option<BluetoothAdvertisementFrame> = match parse_bluetooth_advertisement_frame(&input) {
             Ok((_, frame)) => Some(frame),
@@ -44,6 +63,20 @@ pub mod test {
         let bt_advertisement_frame = bt_advertisement_frame.unwrap();
 
         assert_eq!(bt_advertisement_frame.app_code, 0x0d);
-        assert_eq!(bt_advertisement_frame.counter, 0x4d);
+        assert_eq!(bt_advertisement_frame.counter, 33);
+        assert_eq!(bt_advertisement_frame.message.len(), 25);
+
+        let location: Option<Location> = match parse_location(&bt_advertisement_frame.message) {
+            Ok((_, location)) => Some(location),
+            Err(_) => None,
+        };
+
+        assert_eq!(location.is_some(), true);
+
+        let location = location.unwrap();
+
+        assert_eq!(location.latitude_int, 1460289024);
+        assert_eq!(location.longitude_int, -291846891);
+
     }
 }

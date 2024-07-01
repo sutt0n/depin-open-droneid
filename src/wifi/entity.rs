@@ -51,6 +51,7 @@ pub struct WifiOpenDroneIDMessage {
 // todo: move to repo.rs
 #[cfg(test)]
 pub mod tests {
+    use crate::odid::{Location, parse_location};
     use crate::wifi::{
         parse_action_frame, 
         remove_radiotap_header, 
@@ -201,6 +202,21 @@ pub mod tests {
 
         // third message location
         assert_eq!(open_drone_id_message_pack.messages[2].message_type, 0x1);
+
+        let location: Option<Location> = match parse_location(&open_drone_id_message_pack.messages[2].message_body) {
+            Ok((_, location)) => Some(location),
+            Err(e) => {
+                eprintln!("Failed to parse location message: {:?}", e);
+                None
+            }
+        };
+
+        assert_eq!(location.is_some(), true);
+
+        let location = location.unwrap();
+
+        assert_eq!(location.latitude_int, 358026271);
+        assert_eq!(location.longitude_int, -907113683);
 
         // fourth message self id
         assert_eq!(open_drone_id_message_pack.messages[3].message_type, 0x3);
