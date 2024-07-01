@@ -19,7 +19,7 @@ use wifi::{
     WifiOpenDroneIDMessagePack
 };
 use web::{init_router, start_webserver};
-use crate::bluetooth::handle_bluetooth_event;
+use crate::{bluetooth::handle_bluetooth_event, wifi::WIFI_ALLIANCE_OUI};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -74,6 +74,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let open_drone_id_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
                 Ok((_, frame)) => {
+                    if frame.oui != WIFI_ALLIANCE_OUI {
+                        continue;
+                    }
                     match parse_service_descriptor_attribute(frame.body) {
                         Ok((_, service_descriptor_attribute)) => {
                             match parse_open_drone_id_message_pack(service_descriptor_attribute.service_info) {
