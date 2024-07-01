@@ -4,7 +4,14 @@ use nom::bytes::complete::{take, take_while};
 use nom::number::complete::{le_u8, le_u16, le_i16, le_i32, be_i32};
 use nom::number::streaming::le_f32;
 
-use super::{BasicId, UasIdType, UaType, OperatorLocationType, SystemMessage, Operator, Location};
+use super::{BasicId, UasIdType, UaType, OperatorLocationType, SystemMessage, Operator, Location, RemoteIdMessage};
+
+pub fn parse_message_type(input: &[u8]) -> IResult<&[u8], RemoteIdMessage> {
+    match take(4usize)(input) {
+        Ok((_, message_type)) => Ok((input, RemoteIdMessage::from(message_type[0] >> 4))),
+        Err(e) => Err(e),
+    }
+}
 
 pub fn parse_basic_id(input: &[u8]) -> IResult<&[u8], BasicId> {
     let (input, id_and_ua_type) = le_u8(input)?;
@@ -138,6 +145,22 @@ pub mod tests {
             .collect();
     
         Ok(bytes)
+    }
+
+    #[test]
+    fn test_parse_message_type() {
+        let bytes = read_fixture("fixtures/odid_system_packet.txt").unwrap();
+
+        let message_type: Option<RemoteIdMessage> = match parse_message_type(&bytes) {
+            Ok((_, message_type)) => Some(message_type),
+            Err(_) => None,
+        };
+
+        assert_eq!(message_type.is_some(), true);
+
+        let message_type = message_type.unwrap();
+
+        assert_eq!(message_type, RemoteIdMessage::SystemMessage);
     }
 
     #[test]

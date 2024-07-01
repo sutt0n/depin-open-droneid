@@ -5,8 +5,9 @@ use bluez_async::DeviceId;
 
 use crate::{
     drone::Drone,
-    odid::{parse_basic_id, parse_location, parse_operator_id, parse_system_message},
+    odid::{RemoteIdMessage, parse_message_type, parse_basic_id, parse_location, parse_operator_id, parse_system_message},
 };
+use super::parse_bluetooth_advertisement_frame;
 
 pub type MessageType = u8;
 
@@ -37,76 +38,123 @@ pub async fn handle_bluetooth_event(
 
                     let clone_data = data.clone();
 
-                    match data[0] {
-                        0x0D => {
-                            // skip first two bytes
-                            let data = &data[2..];
-
-                            let header = data[0];
-                            // message type is 4 bits, protocol version is last 4 bits
-                            let message_type = (header & 0xF0) >> 4;
-                            let _protocol_version = header & 0x0F;
-
-                            let data = &data[1..];
-
-                            match message_type {
-                                0 => {
-                                    println!("Basic ID {:?}", clone_data);
-                                    if let Ok((_, basic_id)) = parse_basic_id(data) {
-                                        drones
-                                            .get_mut(&id)
-                                            .unwrap()
-                                            .update_basic_id(basic_id);
+                    if let Ok((_, bt_advertisement_frame)) = parse_bluetooth_advertisement_frame(data) {
+                        match parse_message_type(&bt_advertisement_frame.message) {
+                            Ok((_, message_type)) => {
+                                match message_type {
+                                    RemoteIdMessage::SystemMessage => {
+                                        if let Ok((_, system_message)) = parse_system_message(&bt_advertisement_frame.message) {
+                                            drones
+                                                .get_mut(&id)
+                                                .unwrap()
+                                                .update_system_message(system_message);
+                                        }
                                     }
-                                }
-                                1 => {
-                                    println!("Location {:?}", clone_data);
-                                    if let Ok((_, location)) = parse_location(data) {
-                                        drones
-                                            .get_mut(&id)
-                                            .unwrap()
-                                            .update_location(location);
+                                    RemoteIdMessage::BasicId => {
+                                        if let Ok((_, basic_id)) = parse_basic_id(&bt_advertisement_frame.message) {
+                                            drones
+                                                .get_mut(&id)
+                                                .unwrap()
+                                                .update_basic_id(basic_id);
+                                        }
                                     }
-                                }
-                                3 => {
-                                    println!("Self ID {:?}", clone_data);
-                                    println!("Self ID message");
-                                }
-                                2 => {
-                                    println!("Self ID {:?}", clone_data);
-                                    println!("Auth message");
-                                }
-                                4 => {
-                                    println!("System Message {:?}", clone_data);
-                                    if let Ok((_, system_message)) = parse_system_message(data) {
-                                        drones
-                                            .get_mut(&id)
-                                            .unwrap()
-                                            .update_system_message(system_message);
-
+                                    RemoteIdMessage::Location => {
+                                        if let Ok((_, location)) = parse_location(&bt_advertisement_frame.message) {
+                                            drones
+                                                .get_mut(&id)
+                                                .unwrap()
+                                                .update_location(location);
+                                        }
                                     }
-                                }
-                                5 => {
-                                    println!("Operator ID {:?}", clone_data);
-                                    if let Ok((_, operator)) = parse_operator_id(data) {
-                                        drones
-                                            .get_mut(&id)
-                                            .unwrap()
-                                            .update_operator(operator);
+                                    RemoteIdMessage::OperatorId => {
+                                        if let Ok((_, operator)) = parse_operator_id(&bt_advertisement_frame.message) {
+                                            drones
+                                                .get_mut(&id)
+                                                .unwrap()
+                                                .update_operator(operator);
+                                        }
                                     }
-                                }
-                                0xF => {
-                                    println!("Message Pack");
-                                }
-                                message => {
-                                    println!("Unknown message type {}", message);
+                                    _ => {
+                                        return Some((id, 69));
+                                    }
                                 }
                             }
-
-                            return Some((id, message_type));
+                            Err(_) => {
+                                return Some((id, 69));
+                            }
                         }
-                        _ => {}
                     }
+
+                    // match data[0] {
+                    //     0x0D => {
+                    //         // skip first two bytes
+                    //         let data = &data[2..];
+                    //
+                    //         let header = data[0];
+                    //         // message type is 4 bits, protocol version is last 4 bits
+                    //         let message_type = (header & 0xF0) >> 4;
+                    //         let _protocol_version = header & 0x0F;
+                    //
+                    //         let data = &data[1..];
+                    //
+                    //         match message_type {
+                    //             0 => {
+                    //                 println!("Basic ID {:?}", clone_data);
+                    //                 if let Ok((_, basic_id)) = parse_basic_id(data) {
+                    //                     drones
+                    //                         .get_mut(&id)
+                    //                         .unwrap()
+                    //                         .update_basic_id(basic_id);
+                    //                 }
+                    //             }
+                    //             1 => {
+                    //                 println!("Location {:?}", clone_data);
+                    //                 if let Ok((_, location)) = parse_location(data) {
+                    //                     drones
+                    //                         .get_mut(&id)
+                    //                         .unwrap()
+                    //                         .update_location(location);
+                    //                 }
+                    //             }
+                    //             3 => {
+                    //                 println!("Self ID {:?}", clone_data);
+                    //                 println!("Self ID message");
+                    //             }
+                    //             2 => {
+                    //                 println!("Self ID {:?}", clone_data);
+                    //                 println!("Auth message");
+                    //             }
+                    //             4 => {
+                    //                 println!("System Message {:?}", clone_data);
+                    //                 if let Ok((_, system_message)) = parse_system_message(data) {
+                    //                     drones
+                    //                         .get_mut(&id)
+                    //                         .unwrap()
+                    //                         .update_system_message(system_message);
+                    //
+                    //                 }
+                    //             }
+                    //             5 => {
+                    //                 println!("Operator ID {:?}", clone_data);
+                    //                 if let Ok((_, operator)) = parse_operator_id(data) {
+                    //                     drones
+                    //                         .get_mut(&id)
+                    //                         .unwrap()
+                    //                         .update_operator(operator);
+                    //                 }
+                    //             }
+                    //             0xF => {
+                    //                 println!("Message Pack");
+                    //             }
+                    //             message => {
+                    //                 println!("Unknown message type {}", message);
+                    //             }
+                    //         }
+                    //
+                    //         return Some((id, message_type));
+                    //     }
+                    //     _ => {}
+                    // }
 
                     Some((id, 69))
                 }

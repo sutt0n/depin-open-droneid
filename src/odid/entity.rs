@@ -135,7 +135,7 @@ pub struct Operator {
     pub operator_id: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum RemoteIdMessage {
     BasicId,
     Location,
