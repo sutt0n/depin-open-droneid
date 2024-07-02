@@ -1,172 +1,155 @@
-use pcap::{Capture, Device};
-use std::process::Command as SysCommand;
-use clap::{Command, Arg};
+use std::collections::HashMap;
 
-mod messages;
-mod parsers;
+use bluez_async::{BluetoothSession, DeviceId, DiscoveryFilter};
+use drone::Drone;
+use pcap::{Capture, Device, Linktype};
 
-use crate::messages::RemoteIdMessage;
-use crate::parsers::{parse_basic_id, parse_location, parse_authentication};
+mod bluetooth;
+mod odid;
+mod drone;
+mod web;
+mod wifi;
 
-fn enable_monitor_mode(device: &str) -> Result<(), String> {
-    // Check if the device is already in monitoring mode
-    let check_mode = SysCommand::new("iwconfig")
-        .arg(device)
-        .output()
-        .expect("failed to execute process");
+use wifi::{
+    enable_monitor_mode, 
+    parse_service_descriptor_attribute, 
+    remove_radiotap_header, 
+    parse_open_drone_id_message_pack, 
+    parse_action_frame, 
+    WifiOpenDroneIDMessagePack
+};
+use web::{init_router, start_webserver};
+use crate::{bluetooth::handle_bluetooth_event, wifi::WIFI_ALLIANCE_OUI};
 
-    let output = String::from_utf8_lossy(&check_mode.stdout);
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let device_name = "hci0";
+    let wifi_device_name = "wlan0mon";
 
-    if !output.contains("Monitor mode enabled") {
-        // Enable monitoring mode using airmon-ng
-        let start_mon = SysCommand::new("sudo")
-            .args(["airmon-ng", "start", device])
-            .output()
-            .expect("failed to execute process");
+    let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
-        if start_mon.status.success() {
-            println!("Monitoring mode enabled on {}", device);
-        } else {
-            return Err("Failed to enable monitoring mode".to_string());
+    let conn_url = std::env::var("DATABASE_URL")
+        .expect("Env var DATABASE_URL is required for this example.");
+
+    let sqlx_connection = sqlx::PgPool::connect(&conn_url).await.unwrap();
+
+    // run the migrations
+    sqlx::migrate!()
+        .run(&sqlx_connection)
+        .await
+        .expect("Failed to run migrations");
+
+    let (router, tx) = init_router(sqlx_connection.clone());
+
+    let wifi_task = tokio::spawn(async move {
+        let wifi_card: &str = "wlx08beac26e3e8";
+
+        if let Err(e) = enable_monitor_mode(wifi_card) {
+            eprintln!("Error: {}", e);
+            return;
         }
-    }
 
-    Ok(())
-}
+        println!("Using device: {}", wifi_card);
 
-fn disable_monitor_mode(device: &str) -> Result<(), String> {
-    // Disable monitoring mode using airmon-ng
-    let stop_mon = SysCommand::new("sudo")
-        .args(["airmon-ng", "stop", device])
-        .output()
-        .expect("failed to execute process");
+        let mut cap = Capture::from_device(wifi_card).unwrap()
+            .promisc(true)
+            .immediate_mode(true)
+            .open();
 
-    if stop_mon.status.success() {
-        println!("Monitoring mode disabled on {}", device);
-    } else {
-        return Err("Failed to disable monitoring mode".to_string());
-    }
+        if let Err(e) = cap {
+            eprintln!("error opening device \"{}\": {}", wifi_card, e);
+            let devices = Device::list().unwrap();
+            let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
 
-    Ok(())
-}
-
-fn main() {
-    let matches = Command::new("Drone ID Scanner")
-        .version("1.0")
-        .author("Your Name")
-        .about("Scans for Open Drone ID packets")
-        .arg(Arg::new("device")
-             .short('d')
-             .long("device")
-             .default_value("wlan0")
-             .help("The network device to capture packets from (e.g., wlan0)"))
-        .get_matches();
-
-    let device_name = matches.get_one::<String>("device").unwrap();
-
-    if let Err(e) = enable_monitor_mode(device_name) {
-        eprintln!("Error: {}", e);
-        return;
-    }
-
-    println!("Using device: {}", device_name);
-
-    let mut cap = Capture::from_device(device_name.as_str()).unwrap()
-        .promisc(true)
-        .open();
-
-    if let Err(e) = cap {
-        eprintln!("error opening device \"{}\": {}", device_name, e);
-        let devices = Device::list().unwrap();
-        let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
-
-        eprintln!("available devices: {:?}", device_names);
-        return;
-    }
-
-    // cap.as_mut().unwrap().filter("type mgt subtype beacon", true).unwrap();
-    //
-    let mut cap = cap.unwrap().setnonblock().unwrap();
-
-    cap.for_each(None, |packet| {
-        let data = packet.data;
-
-        // packet bytes are in little-endian order
-        // let data = data.iter().enumerate().map(|(i, &b)| {
-        //     if i % 2 == 0 {
-        //         b
-        //     } else {
-        //         b.rotate_left(4)
-        //     }
-        // }).collect::<Vec<u8>>();
-        //
-        // let data = &data[..];
-
-        // header is 1 byte
-        // bits 7..4 are the message type 
-        // bytes 3..0 are the protocol version
-        let message_type = data[0] >> 4;
-        let protocol_version = data[0] & 0x0F;
-
-        if data.len() > 20 { // Ensure there's enough data to parse
-        let id_type = data[0] >> 4; // First 4 bits of the first byte
-        let ua_type = data[0] & 0x0F; // Last 4 bits of the first byte
-        let uas_id = &data[1..21]; // Assuming UAS ID is 20 bytes long
-
-        if let Ok(uas_id_str) = std::str::from_utf8(uas_id) {
-            println!("Basic ID - ID Type: {}, UA Type: {}, UAS ID: {}", id_type, ua_type, uas_id_str);
-        } else {
-            println!("Failed to parse UAS ID");
+            eprintln!("available devices: {:?}", device_names);
+            return;
         }
-    }
 
-        println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
+        cap.as_mut().unwrap().set_datalink(Linktype::IEEE802_11_RADIOTAP).unwrap();
 
-        let message = match message_type {
-            0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
-            1 => RemoteIdMessage::Location(parse_location(data)),
-            2 => RemoteIdMessage::Authentication(parse_authentication(data)),
-            _ => RemoteIdMessage::Unknown,
-        };
+        while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
+            let data = packet.data;
 
-        println!("Received packet: {:?}", message);
-    }).unwrap();
+            let payload = remove_radiotap_header(data);
 
-    // while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
-    //     let data = packet.data;
-    //     let header = packet.header;
+            let open_drone_id_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
+                Ok((_, frame)) => {
+                    if frame.oui != WIFI_ALLIANCE_OUI {
+                        continue;
+                    }
+                    match parse_service_descriptor_attribute(frame.body) {
+                        Ok((_, service_descriptor_attribute)) => {
+                            match parse_open_drone_id_message_pack(service_descriptor_attribute.service_info) {
+                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
+                                Err(e) => {
+                                    eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                    continue;
+                                }
+                            }
+                        },
+                        Err(e) => {
+                            eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                            continue;
+                        }
+                    }
+                },
+                Err(e) => {
+                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                    continue;
+                }
+            };
+
+            println!("{:?}", open_drone_id_message_pack);
+
+            // todo: parse open drone id message pack and insert into db
+        }
+    });
+
+    // Spawn a task to handle bluetooth events
+    // let bt_task = tokio::spawn(async move {
+    //     let (_, session) = BluetoothSession::new().await.unwrap();
+    //     let mut events = session.event_stream().await.unwrap();
+    //     session
+    //         .start_discovery_with_filter(&DiscoveryFilter {
+    //             duplicate_data: Some(true),
+    //             ..DiscoveryFilter::default()
+    //         })
+    //         .await
+    //         .unwrap();
     //
+    //     println!("Scanning for Bluetooth advertisement data.");
     //
-    //     // packet bytes are in little-endian order
-    //     let data = data.iter().enumerate().map(|(i, &b)| {
-    //         if i % 2 == 0 {
-    //             b
-    //         } else {
-    //             b.rotate_left(4)
+    //     while let Some(event) = events.next().await {
+    //         if let Some((device_id, message_type)) =
+    //             handle_bluetooth_event(&mut drones, device_name, event).await
+    //         {
+    //             let drone = drones.get_mut(&device_id);
+    //
+    //             if drone.is_some() {
+    //                 let drone = drone.unwrap();
+    //                 if drone.payload_ready() {
+    //                     let drone_dto = DroneDto::from(drone.clone());
+    //
+    //                     if !drone.is_in_db {
+    //                         let inserted_drone =
+    //                             insert_drone(drone_dto, &sqlx_connection, &tx).await;
+    //                         drone.set_in_db(true, inserted_drone.id);
+    //                     } else {
+    //                         if message_type == 2 || message_type == 4 {
+    //                             insert_drone(drone_dto, &sqlx_connection, &tx).await;
+    //                         }
+    //                     }
+    //                 }
+    //             }
     //         }
-    //     }).collect::<Vec<u8>>();
-    //     
-    //     let data = &data[..];
-    //
-    //     // header is 1 byte
-    //     // bits 7..4 are the message type 
-    //     // bytes 3..0 are the protocol version
-    //     let message_type = data[0] >> 4;
-    //     let protocol_version = data[0] & 0x0F;
-    //
-    //     println!("Received packet with protocol version {} and message type {}", protocol_version, message_type);
-    //
-    //     let message = match message_type {
-    //         0 => RemoteIdMessage::BasicId(parse_basic_id(data)),
-    //         1 => RemoteIdMessage::Location(parse_location(data)),
-    //         2 => RemoteIdMessage::Authentication(parse_authentication(data)),
-    //         _ => RemoteIdMessage::Unknown,
-    //     };
-    //
-    //     println!("Received packet: {:?}", message);
-    // }
+    //     }
+    // });
 
-    println!("Exiting...");
+    // Run both tasks concurrently
+    // let (_, _) = tokio::join!(bt_task, start_webserver(router));
 
-    disable_monitor_mode(device_name).unwrap_or_else(|err| eprintln!("Error: {}", err));
+    let _ = tokio::join!(wifi_task);
+
+    Ok(())
 }
+
