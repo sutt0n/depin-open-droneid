@@ -28,3 +28,4 @@ packed_struct = { version = "0.10.1", features = ["use_serde"] }
 bincode = "1.3.3"
 radiotap = "1.3.0"
 nom = "7.1.3"
+derive_builder = "0.20.0"
