@@ -1,10 +1,13 @@
-use byteorder::{LittleEndian, ByteOrder};
-use nom::IResult;
+use byteorder::{ByteOrder, LittleEndian};
 use nom::bytes::complete::{take, take_while};
-use nom::number::complete::{le_u8, le_u16, le_i16, le_i32, be_i32};
+use nom::number::complete::{be_i32, le_i16, le_i32, le_u16, le_u8};
 use nom::number::streaming::le_f32;
+use nom::IResult;
 
-use super::{BasicId, UasIdType, UaType, OperatorLocationType, SystemMessage, Operator, Location, RemoteIdMessage};
+use super::{
+    BasicId, Location, Operator, OperatorLocationType, RemoteIdMessage, SystemMessage, UaType,
+    UasIdType,
+};
 
 pub fn parse_message_type(input: &[u8]) -> IResult<&[u8], RemoteIdMessage> {
     match take(4usize)(input) {
@@ -30,12 +33,15 @@ pub fn parse_basic_id(input: &[u8]) -> IResult<&[u8], BasicId> {
         .filter(|b| b.is_ascii_alphanumeric())
         .cloned()
         .collect::<Vec<u8>>();
-    
-    Ok((input, BasicId {
-        uas_id_type: UasIdType::from(id_type),
-        ua_type: UaType::from(ua_type),
-        uas_id: String::from_utf8_lossy(&uas_id).to_string(),
-    }))
+
+    Ok((
+        input,
+        BasicId {
+            uas_id_type: UasIdType::from(id_type),
+            ua_type: UaType::from(ua_type),
+            uas_id: String::from_utf8_lossy(&uas_id).to_string(),
+        },
+    ))
 }
 
 pub fn parse_system_message(input: &[u8]) -> IResult<&[u8], SystemMessage> {
@@ -44,7 +50,7 @@ pub fn parse_system_message(input: &[u8]) -> IResult<&[u8], SystemMessage> {
 
     let operator_location_type = OperatorLocationType::from(operator_location_type);
 
-    // operator_latitude_int is 4 bytes, signed int, little endian 
+    // operator_latitude_int is 4 bytes, signed int, little endian
     let (input, operator_latitude_int) = le_i32(input)?;
     // let (input, operator_latitude_int) = take(32usize)(input)?;
     let (input, operator_longitude_int) = le_i32(input)?;
@@ -53,25 +59,31 @@ pub fn parse_system_message(input: &[u8]) -> IResult<&[u8], SystemMessage> {
     let (input, area_ceiling) = le_u16(input)?;
     let (input, area_floor) = le_u16(input)?;
 
-    Ok((input, SystemMessage {
-        operator_location_type,
-        operator_latitude_int,
-        operator_longitude_int,
-        area_count,
-        area_radius,
-        area_ceiling,
-        area_floor,
-    }))
+    Ok((
+        input,
+        SystemMessage {
+            operator_location_type,
+            operator_latitude_int,
+            operator_longitude_int,
+            area_count,
+            area_radius,
+            area_ceiling,
+            area_floor,
+        },
+    ))
 }
 
 pub fn parse_operator_id(input: &[u8]) -> IResult<&[u8], Operator> {
     let (input, operator_id_type) = le_u8(input)?;
     let (input, operator_id) = take_while(|b| b != 0x00)(input)?;
 
-    Ok((input, Operator {
-        operator_id_type,
-        operator_id: String::from_utf8_lossy(operator_id).to_string(),
-    }))
+    Ok((
+        input,
+        Operator {
+            operator_id_type,
+            operator_id: String::from_utf8_lossy(operator_id).to_string(),
+        },
+    ))
 }
 
 pub fn parse_location(input: &[u8]) -> IResult<&[u8], Location> {
@@ -101,49 +113,52 @@ pub fn parse_location(input: &[u8]) -> IResult<&[u8], Location> {
 
     let (input, timestamp) = le_u16(input)?;
 
-    Ok((input, Location {
-        status,
-        height_type,
-        ew_direction,
-        speed_multiplier,
-        tracking_direction,
-        speed,
-        vertical_speed,
-        latitude_int,
-        longitude_int,
-        altitude_pressure,
-        altitude_geodetic,
-        height,
-        horizontal_accuracy,
-        vertical_accuracy,
-        barometric_altitude_accuracy,
-        speed_accuracy,
-        timestamp,
-    }))
+    Ok((
+        input,
+        Location {
+            status,
+            height_type,
+            ew_direction,
+            speed_multiplier,
+            tracking_direction,
+            speed,
+            vertical_speed,
+            latitude_int,
+            longitude_int,
+            altitude_pressure,
+            altitude_geodetic,
+            height,
+            horizontal_accuracy,
+            vertical_accuracy,
+            barometric_altitude_accuracy,
+            speed_accuracy,
+            timestamp,
+        },
+    ))
 }
 
 #[cfg(test)]
 pub mod tests {
     use super::*;
     use std::fs::File;
-    use std::io::{self, Read, BufReader};
+    use std::io::{self, BufReader, Read};
 
     fn read_fixture(file_path: &str) -> io::Result<Vec<u8>> {
         // Open the file
         let file = File::open(file_path)?;
         let mut buf_reader = BufReader::new(file);
-    
+
         // Read the file content into a string
         let mut content = String::new();
         buf_reader.read_to_string(&mut content)?;
-    
+
         // Trim the square brackets and split the string by comma
         let content = content.trim().trim_start_matches('[').trim_end_matches(']');
         let bytes: Vec<u8> = content
             .split(',')
             .map(|s| s.trim().parse().expect("Failed to parse byte"))
             .collect();
-    
+
         Ok(bytes)
     }
 
@@ -191,7 +206,7 @@ pub mod tests {
             Err(e) => {
                 eprintln!("Failed to parse location message: {:?}", e);
                 None
-            },
+            }
         };
 
         assert_eq!(location_message.is_some(), true);
@@ -231,7 +246,10 @@ pub mod tests {
 
         let system_message = system_message.unwrap();
 
-        assert_eq!(system_message.operator_location_type, OperatorLocationType::FixedLocation);
+        assert_eq!(
+            system_message.operator_location_type,
+            OperatorLocationType::FixedLocation
+        );
         assert_eq!(system_message.operator_latitude_int, 1460276480);
         assert_eq!(system_message.operator_longitude_int, -291837931);
         assert_eq!(system_message.area_count, 457);

@@ -5,7 +5,7 @@ pub const NAN_SERVICE_ID: [u8; 6] = [0x88, 0x69, 0x19, 0x9d, 0x92, 0x09];
 pub struct WifiActionFrame<'a> {
     pub frame_control: u16,
     pub frame_control_version: u8, // first 2 bits, 000000xx
-    pub frame_control_type: u8, // next 2 bits, 0000xx00
+    pub frame_control_type: u8,    // next 2 bits, 0000xx00
     pub frame_control_subtype: u8, // next 4 bits, xxxx0000
     pub duration_id: u16,
     pub address1: &'a [u8],
@@ -35,7 +35,7 @@ pub struct WifiServiceDescriptorAttribute<'a> {
 #[derive(Debug)]
 pub struct WifiOpenDroneIDMessagePack {
     pub message_type: u8, // 4 bits
-    pub version: u8, // 4 bits
+    pub version: u8,      // 4 bits
     pub single_msg_size: u8,
     pub num_messages: u8,
     pub messages: Vec<WifiOpenDroneIDMessage>,
@@ -51,34 +51,32 @@ pub struct WifiOpenDroneIDMessage {
 // todo: move to repo.rs
 #[cfg(test)]
 pub mod tests {
-    use crate::odid::{Location, parse_location};
+    use crate::odid::{parse_location, Location};
     use crate::wifi::{
-        parse_action_frame, 
-        remove_radiotap_header, 
-        parse_service_descriptor_attribute, 
-        parse_open_drone_id_message_pack
+        parse_action_frame, parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
+        remove_radiotap_header,
     };
 
     use super::*;
     use std::fs::File;
-    use std::io::{self, Read, BufReader};
+    use std::io::{self, BufReader, Read};
 
     fn read_fixture(file_path: &str) -> io::Result<Vec<u8>> {
         // Open the file
         let file = File::open(file_path)?;
         let mut buf_reader = BufReader::new(file);
-    
+
         // Read the file content into a string
         let mut content = String::new();
         buf_reader.read_to_string(&mut content)?;
-    
+
         // Trim the square brackets and split the string by comma
         let content = content.trim().trim_start_matches('[').trim_end_matches(']');
         let bytes: Vec<u8> = content
             .split(',')
             .map(|s| s.trim().parse().expect("Failed to parse byte"))
             .collect();
-    
+
         Ok(bytes)
     }
 
@@ -121,23 +119,20 @@ pub mod tests {
 
         let payload = remove_radiotap_header(frame_data);
 
-        let service_descriptor_attribute: Option<WifiServiceDescriptorAttribute> = match parse_action_frame(payload) {
-            Ok((_, frame)) => {
-                match parse_service_descriptor_attribute(frame.body) {
-                    Ok((_, attribute)) => {
-                        Some(attribute)
-                    }
+        let service_descriptor_attribute: Option<WifiServiceDescriptorAttribute> =
+            match parse_action_frame(payload) {
+                Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
+                    Ok((_, attribute)) => Some(attribute),
                     Err(e) => {
                         eprintln!("Failed to parse service descriptor attribute: {:?}", e);
                         None
                     }
+                },
+                Err(e) => {
+                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                    None
                 }
-            },
-            Err(e) => {
-                eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                None
-            }
-        };
+            };
 
         assert_eq!(service_descriptor_attribute.is_some(), true);
 
@@ -159,31 +154,28 @@ pub mod tests {
 
         let payload = remove_radiotap_header(frame_data);
 
-        let open_drone_id_message_pack: Option<WifiOpenDroneIDMessagePack> = match parse_action_frame(payload) {
-            Ok((_, frame)) => {
-                match parse_service_descriptor_attribute(frame.body) {
+        let open_drone_id_message_pack: Option<WifiOpenDroneIDMessagePack> =
+            match parse_action_frame(payload) {
+                Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
                     Ok((_, attribute)) => {
                         match parse_open_drone_id_message_pack(attribute.service_info) {
-                            Ok((_, message_pack)) => {
-                                Some(message_pack)
-                            }
+                            Ok((_, message_pack)) => Some(message_pack),
                             Err(e) => {
                                 eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
                                 None
-                            },
+                            }
                         }
                     }
                     Err(e) => {
                         eprintln!("Failed to parse service descriptor attribute: {:?}", e);
                         None
                     }
+                },
+                Err(e) => {
+                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                    None
                 }
-            },
-            Err(e) => {
-                eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                None
-            }
-        };
+            };
 
         assert_eq!(open_drone_id_message_pack.is_some(), true);
 
@@ -203,13 +195,14 @@ pub mod tests {
         // third message location
         assert_eq!(open_drone_id_message_pack.messages[2].message_type, 0x1);
 
-        let location: Option<Location> = match parse_location(&open_drone_id_message_pack.messages[2].message_body) {
-            Ok((_, location)) => Some(location),
-            Err(e) => {
-                eprintln!("Failed to parse location message: {:?}", e);
-                None
-            }
-        };
+        let location: Option<Location> =
+            match parse_location(&open_drone_id_message_pack.messages[2].message_body) {
+                Ok((_, location)) => Some(location),
+                Err(e) => {
+                    eprintln!("Failed to parse location message: {:?}", e);
+                    None
+                }
+            };
 
         assert_eq!(location.is_some(), true);
 

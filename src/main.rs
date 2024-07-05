@@ -5,21 +5,17 @@ use drone::Drone;
 use pcap::{Capture, Device, Linktype};
 
 mod bluetooth;
-mod odid;
 mod drone;
+mod odid;
 mod web;
 mod wifi;
 
-use wifi::{
-    enable_monitor_mode, 
-    parse_service_descriptor_attribute, 
-    remove_radiotap_header, 
-    parse_open_drone_id_message_pack, 
-    parse_action_frame, 
-    WifiOpenDroneIDMessagePack
-};
-use web::{init_router, start_webserver};
 use crate::{bluetooth::handle_bluetooth_event, wifi::WIFI_ALLIANCE_OUI};
+use web::{init_router, start_webserver};
+use wifi::{
+    enable_monitor_mode, parse_action_frame, parse_open_drone_id_message_pack,
+    parse_service_descriptor_attribute, remove_radiotap_header, WifiOpenDroneIDMessagePack,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,8 +24,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let mut drones: HashMap<DeviceId, Drone> = HashMap::new();
 
-    let conn_url = std::env::var("DATABASE_URL")
-        .expect("Env var DATABASE_URL is required for this example.");
+    let conn_url =
+        std::env::var("DATABASE_URL").expect("Env var DATABASE_URL is required for this example.");
 
     let sqlx_connection = sqlx::PgPool::connect(&conn_url).await.unwrap();
 
@@ -51,7 +47,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!("Using device: {}", wifi_card);
 
-        let mut cap = Capture::from_device(wifi_card).unwrap()
+        let mut cap = Capture::from_device(wifi_card)
+            .unwrap()
             .promisc(true)
             .immediate_mode(true)
             .open();
@@ -59,45 +56,59 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Err(e) = cap {
             eprintln!("error opening device \"{}\": {}", wifi_card, e);
             let devices = Device::list().unwrap();
-            let device_names = devices.iter().map(|d| d.name.clone()).collect::<Vec<String>>();
+            let device_names = devices
+                .iter()
+                .map(|d| d.name.clone())
+                .collect::<Vec<String>>();
 
             eprintln!("available devices: {:?}", device_names);
             return;
         }
 
-        cap.as_mut().unwrap().set_datalink(Linktype::IEEE802_11_RADIOTAP).unwrap();
+        cap.as_mut()
+            .unwrap()
+            .set_datalink(Linktype::IEEE802_11_RADIOTAP)
+            .unwrap();
 
         while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
             let data = packet.data;
 
             let payload = remove_radiotap_header(data);
 
-            let open_drone_id_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
-                Ok((_, frame)) => {
-                    if frame.oui != WIFI_ALLIANCE_OUI {
-                        continue;
-                    }
-                    match parse_service_descriptor_attribute(frame.body) {
-                        Ok((_, service_descriptor_attribute)) => {
-                            match parse_open_drone_id_message_pack(service_descriptor_attribute.service_info) {
-                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
-                                Err(e) => {
-                                    eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
-                                    continue;
-                                }
-                            }
-                        },
-                        Err(e) => {
-                            eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+            let open_drone_id_message_pack: WifiOpenDroneIDMessagePack =
+                match parse_action_frame(payload) {
+                    Ok((_, frame)) => {
+                        if frame.oui != WIFI_ALLIANCE_OUI {
                             continue;
                         }
+                        match parse_service_descriptor_attribute(frame.body) {
+                            Ok((_, service_descriptor_attribute)) => {
+                                match parse_open_drone_id_message_pack(
+                                    service_descriptor_attribute.service_info,
+                                ) {
+                                    Ok((_, open_drone_id_message_pack)) => {
+                                        open_drone_id_message_pack
+                                    }
+                                    Err(e) => {
+                                        eprintln!(
+                                            "Failed to parse Open Drone ID message pack: {:?}",
+                                            e
+                                        );
+                                        continue;
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                                continue;
+                            }
+                        }
                     }
-                },
-                Err(e) => {
-                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                    continue;
-                }
-            };
+                    Err(e) => {
+                        eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
+                        continue;
+                    }
+                };
 
             println!("{:?}", open_drone_id_message_pack);
 
@@ -152,4 +163,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
