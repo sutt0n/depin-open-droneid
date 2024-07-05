@@ -124,25 +124,45 @@ pub fn start_wifi_task(
                             drone.update_operator(operator_id_message);
                         }
                     }
-                    _ => {}
+                    m => {
+                        println!("Unknown message type: {:?} {:?}", message.message_type, m);
+                        continue;
+                    }
                 }
             }
 
-            if drone.payload_ready() {
+            println!("Checking payload for drone {:?}", drone);
+
                 let drone_id = if let Some(id) = drone.basic_id.as_ref() {
                     id.uas_id.clone()
                 } else {
                     continue;
                 };
 
-                let drone = drones.insert(drone_id, drone).unwrap();
+            // if drones.contains_key(&drone_id) {
+            //     let drone = drones.get_mut(&drone_id).unwrap();
+            //     drone.update_location(drone.last_location.clone().unwrap());
+            //     drone.update_system_message(drone.system_message.clone().unwrap());
+            //     drone.update_operator(drone.operator.clone().unwrap());
+            // }
+
+            if drone.payload_ready() {
+                println!("Payload ready for drone");
+
+                println!("Drone ID: {}", drone_id);
+
+                drones.insert(drone_id, drone.clone());
 
                 let drone_dto = DroneDto::from(drone);
 
                 let db_pool = db_pool.lock().await;
                 let tx = tx.lock().await;
 
+                println!("Inserting drone into database");
+
                 insert_drone(drone_dto, &db_pool, &tx).await;
+            } else {
+                drones.insert(drone_id, drone);
             }
         }
     })

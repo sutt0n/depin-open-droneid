@@ -75,7 +75,6 @@ impl Drone {
         self.basic_id.is_some()
             && self.last_location.is_some()
             && self.system_message.is_some()
-            && self.operator.is_some()
     }
 
     pub fn payload_progress(&self) -> i32 {
