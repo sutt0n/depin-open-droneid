@@ -5,10 +5,9 @@ use radiotap::Radiotap;
 use std::convert::TryInto;
 
 use super::{
-    WifiActionFrame as ActionFrame, 
-    WifiServiceDescriptorAttribute as ServiceDescriptorAttribute, 
-    WifiOpenDroneIDMessagePack as OpenDroneIDMessagePack, 
-    WifiOpenDroneIDMessage as OpenDroneIDMessage
+    WifiActionFrame as ActionFrame, WifiOpenDroneIDMessage as OpenDroneIDMessage,
+    WifiOpenDroneIDMessagePack as OpenDroneIDMessagePack,
+    WifiServiceDescriptorAttribute as ServiceDescriptorAttribute,
 };
 
 pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
@@ -53,7 +52,9 @@ pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDron
     ))
 }
 
-pub fn parse_service_descriptor_attribute(input: &[u8]) -> IResult<&[u8], ServiceDescriptorAttribute> {
+pub fn parse_service_descriptor_attribute(
+    input: &[u8],
+) -> IResult<&[u8], ServiceDescriptorAttribute> {
     let (input, attribute_id) = le_u8(input)?;
     let (input, attribute_length) = le_u16(input)?;
     let (input, service_id) = take(6usize)(input)?;
@@ -95,7 +96,7 @@ pub fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
     let (input, oui) = take(3usize)(input)?;
     let (input, oui_type) = take(1usize)(input)?;
     let (input, body) = take(input.len())(input)?;
-    
+
     Ok((
         input,
         ActionFrame {
@@ -135,5 +136,3 @@ pub fn remove_radiotap_header(input: &[u8]) -> &[u8] {
         input
     }
 }
-
-

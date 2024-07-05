@@ -1,13 +1,15 @@
-
 use std::collections::HashMap;
 
 use bluez_async::DeviceId;
 
+use super::parse_bluetooth_advertisement_frame;
 use crate::{
     drone::Drone,
-    odid::{RemoteIdMessage, parse_message_type, parse_basic_id, parse_location, parse_operator_id, parse_system_message},
+    odid::{
+        parse_basic_id, parse_location, parse_message_type, parse_operator_id,
+        parse_system_message, RemoteIdMessage,
+    },
 };
-use super::parse_bluetooth_advertisement_frame;
 
 pub type MessageType = u8;
 
@@ -38,47 +40,46 @@ pub async fn handle_bluetooth_event(
 
                     let clone_data = data.clone();
 
-                    if let Ok((_, bt_advertisement_frame)) = parse_bluetooth_advertisement_frame(data) {
+                    if let Ok((_, bt_advertisement_frame)) =
+                        parse_bluetooth_advertisement_frame(data)
+                    {
                         match parse_message_type(&bt_advertisement_frame.message) {
-                            Ok((_, message_type)) => {
-                                match message_type {
-                                    RemoteIdMessage::SystemMessage => {
-                                        if let Ok((_, system_message)) = parse_system_message(&bt_advertisement_frame.message) {
-                                            drones
-                                                .get_mut(&id)
-                                                .unwrap()
-                                                .update_system_message(system_message);
-                                        }
-                                    }
-                                    RemoteIdMessage::BasicId => {
-                                        if let Ok((_, basic_id)) = parse_basic_id(&bt_advertisement_frame.message) {
-                                            drones
-                                                .get_mut(&id)
-                                                .unwrap()
-                                                .update_basic_id(basic_id);
-                                        }
-                                    }
-                                    RemoteIdMessage::Location => {
-                                        if let Ok((_, location)) = parse_location(&bt_advertisement_frame.message) {
-                                            drones
-                                                .get_mut(&id)
-                                                .unwrap()
-                                                .update_location(location);
-                                        }
-                                    }
-                                    RemoteIdMessage::OperatorId => {
-                                        if let Ok((_, operator)) = parse_operator_id(&bt_advertisement_frame.message) {
-                                            drones
-                                                .get_mut(&id)
-                                                .unwrap()
-                                                .update_operator(operator);
-                                        }
-                                    }
-                                    _ => {
-                                        return Some((id, 69));
+                            Ok((_, message_type)) => match message_type {
+                                RemoteIdMessage::SystemMessage => {
+                                    if let Ok((_, system_message)) =
+                                        parse_system_message(&bt_advertisement_frame.message)
+                                    {
+                                        drones
+                                            .get_mut(&id)
+                                            .unwrap()
+                                            .update_system_message(system_message);
                                     }
                                 }
-                            }
+                                RemoteIdMessage::BasicId => {
+                                    if let Ok((_, basic_id)) =
+                                        parse_basic_id(&bt_advertisement_frame.message)
+                                    {
+                                        drones.get_mut(&id).unwrap().update_basic_id(basic_id);
+                                    }
+                                }
+                                RemoteIdMessage::Location => {
+                                    if let Ok((_, location)) =
+                                        parse_location(&bt_advertisement_frame.message)
+                                    {
+                                        drones.get_mut(&id).unwrap().update_location(location);
+                                    }
+                                }
+                                RemoteIdMessage::OperatorId => {
+                                    if let Ok((_, operator)) =
+                                        parse_operator_id(&bt_advertisement_frame.message)
+                                    {
+                                        drones.get_mut(&id).unwrap().update_operator(operator);
+                                    }
+                                }
+                                _ => {
+                                    return Some((id, 69));
+                                }
+                            },
                             Err(_) => {
                                 return Some((id, 69));
                             }
