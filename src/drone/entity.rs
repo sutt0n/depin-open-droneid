@@ -5,12 +5,19 @@ use crate::odid::{BasicId, Location, Operator, SystemMessage};
 
 #[derive(Debug, Default, Builder, Serialize, Deserialize, Clone)]
 pub struct Drone {
+    #[builder(default = "false")]
     pub is_in_db: bool,
+    #[builder(default = "0")]
     pub db_id: i32,
+    #[builder(default = "None")]
     pub basic_id: Option<BasicId>,
+    #[builder(default = "None")]
     pub last_location: Option<Location>,
+    #[builder(default = "vec![]")]
     pub location_history: Vec<Location>,
+    #[builder(default = "None")]
     pub system_message: Option<SystemMessage>,
+    #[builder(default = "None")]
     pub operator: Option<Operator>,
 }
 
