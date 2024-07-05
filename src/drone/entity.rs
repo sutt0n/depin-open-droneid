@@ -1,8 +1,9 @@
+use derive_builder::Builder;
 use serde::{Deserialize, Serialize};
 
 use crate::odid::{BasicId, Location, Operator, SystemMessage};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Default, Builder, Serialize, Deserialize, Clone)]
 pub struct Drone {
     pub is_in_db: bool,
     pub db_id: i32,
