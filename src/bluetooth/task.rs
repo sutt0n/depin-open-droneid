@@ -90,6 +90,8 @@ pub async fn handle_bluetooth_event(
                         return Some((id, 69));
                     }
 
+                    println!("[nom-nom] Bluetooth event.");
+
                     let drone = drones.get(&id.to_string());
 
                     if drone.is_none() {
