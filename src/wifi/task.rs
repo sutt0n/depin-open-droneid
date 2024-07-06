@@ -39,6 +39,7 @@ pub async fn start_wifi_task(
         let mut cap = Capture::from_device(wifi_card)
             .unwrap()
             .promisc(true)
+            .rfmon(true)
             .immediate_mode(true)
             .open();
 
