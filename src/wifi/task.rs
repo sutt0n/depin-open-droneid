@@ -1,5 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
+use chrono::{DateTime, Utc};
 use pcap::{Capture, Device, Linktype};
 use sqlx::{Pool, Postgres};
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -9,11 +10,11 @@ use crate::{
     odid::{
         parse_basic_id, parse_location, parse_operator_id, parse_system_message, RemoteIdMessage,
     },
-    web::{insert_drone, DroneDto, DroneUpdate},
+    web::{insert_drone, update_drone, DroneDto, DroneUpdate},
     wifi::{
         enable_monitor_mode, parse_action_frame, parse_open_drone_id_message_pack,
-        parse_service_descriptor_attribute, remove_radiotap_header, WifiOpenDroneIDMessagePack,
-        WIFI_ALLIANCE_OUI,
+        parse_service_descriptor_attribute, remove_radiotap_header, WifiInterface,
+        WifiInterfaceBuilder, WifiOpenDroneIDMessagePack, WIFI_ALLIANCE_OUI,
     },
 };
 use tokio::sync::broadcast::Sender;
@@ -58,8 +59,18 @@ pub fn start_wifi_task(
             .set_datalink(Linktype::IEEE802_11_RADIOTAP)
             .unwrap();
 
+        let mut wifi_interface: WifiInterface = WifiInterfaceBuilder::default()
+            .channel(6)
+            .name(wifi_card.to_string())
+            .build()
+            .unwrap();
+
         while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
             let data = packet.data;
+
+            if wifi_interface.should_change_channel() {
+                wifi_interface.adjust_channel();
+            }
 
             let payload = remove_radiotap_header(data);
 
@@ -95,7 +106,8 @@ pub fn start_wifi_task(
                 }
             };
 
-            println!("{:?}", odid_message_pack);
+            let current_timestamp: DateTime<Utc> = Utc::now();
+            wifi_interface.update_last_odid_received(current_timestamp);
 
             let mut drone: Drone = DroneBuilder::default().build().unwrap();
 
@@ -133,34 +145,56 @@ pub fn start_wifi_task(
 
             println!("Checking payload for drone {:?}", drone);
 
-                let drone_id = if let Some(id) = drone.basic_id.as_ref() {
-                    id.uas_id.clone()
-                } else {
-                    continue;
-                };
+            let drone_id = if let Some(id) = drone.basic_id.as_ref() {
+                id.uas_id.clone()
+            } else {
+                continue;
+            };
 
-            // if drones.contains_key(&drone_id) {
-            //     let drone = drones.get_mut(&drone_id).unwrap();
-            //     drone.update_location(drone.last_location.clone().unwrap());
-            //     drone.update_system_message(drone.system_message.clone().unwrap());
-            //     drone.update_operator(drone.operator.clone().unwrap());
-            // }
+            if drones.contains_key(&drone_id) {
+                let drone = drones.get_mut(&drone_id).unwrap();
 
-            if drone.payload_ready() {
+                if let Some(last_location) = drone.last_location.clone() {
+                    drone.update_location(last_location);
+                }
+
+                if let Some(system_message) = drone.system_message.clone() {
+                    drone.update_system_message(system_message);
+                }
+
+                if let Some(operator) = drone.operator.clone() {
+                    drone.update_operator(operator);
+                }
+
+                if let Some(basic_id) = drone.basic_id.clone() {
+                    drone.update_basic_id(basic_id);
+                }
+            }
+
+            if drone.payload_ready() && !drone.is_in_db {
                 println!("Payload ready for drone");
 
                 println!("Drone ID: {}", drone_id);
 
                 drones.insert(drone_id, drone.clone());
 
-                let drone_dto = DroneDto::from(drone);
+                let drone_dto = DroneDto::from(drone.clone());
 
                 let db_pool = db_pool.lock().await;
                 let tx = tx.lock().await;
 
                 println!("Inserting drone into database");
 
-                insert_drone(drone_dto, &db_pool, &tx).await;
+                let drone_dto = insert_drone(drone_dto, &db_pool, &tx).await;
+
+                drone.set_in_db(true, drone_dto.id);
+            } else if drone.payload_ready() && drone.is_in_db {
+                let drone_dto = DroneDto::from(drone.clone());
+
+                let db_pool = db_pool.lock().await;
+                let tx = tx.lock().await;
+
+                update_drone(drone_dto, &db_pool, &tx).await;
             } else {
                 drones.insert(drone_id, drone);
             }
