@@ -36,12 +36,15 @@ impl WifiInterface {
     }
 
     pub fn adjust_channel(&mut self) {
+
         match self.channel {
             1 => self.channel = 6,
             6 => self.channel = 11,
             11 => self.channel = 1,
             _ => self.channel = 6,
         }
+
+        println!("Adjusting channel to {}", self.channel);
 
         self.last_odid_received = None;
 
