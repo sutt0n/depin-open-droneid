@@ -42,7 +42,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&db_pool),
         Arc::clone(&drones),
         Arc::clone(&update_tx),
-    ).await;
+    )
+    .await;
 
     // Spawn a task to handle bluetooth events
     let bt_task = start_bluetooth_task(
@@ -50,7 +51,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Arc::clone(&drones),
         Arc::clone(&db_pool),
         Arc::clone(&update_tx),
-    ).await;
+    )
+    .await;
 
     // Run both tasks concurrently
     let (_, _, _) = tokio::join!(bt_task, wifi_task, start_webserver(router));

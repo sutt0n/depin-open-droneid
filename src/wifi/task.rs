@@ -12,9 +12,10 @@ use crate::{
     },
     web::{insert_drone, update_drone, DroneDto, DroneUpdate},
     wifi::{
-        enable_monitor_mode, parse_action_frame, parse_open_drone_id_message_pack,
-        parse_service_descriptor_attribute, remove_radiotap_header, WifiInterface,
-        WifiInterfaceBuilder, WifiOpenDroneIDMessagePack, WIFI_ALLIANCE_OUI,
+        enable_monitor_mode, parse_action_frame, parse_beacon_frame,
+        parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
+        remove_radiotap_header, WifiInterface, WifiInterfaceBuilder, WifiOpenDroneIDMessagePack,
+        WIFI_ALLIANCE_OUI,
     },
 };
 use tokio::sync::broadcast::Sender;
@@ -106,9 +107,27 @@ pub async fn start_wifi_task(
                     }
                 }
                 Err(e) => {
-                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                    eprintln!("Data: {:?}", String::from_utf8_lossy(data));
-                    continue;
+                    // try to parse as Beacon
+                    match parse_beacon_frame(payload) {
+                        Ok((_, beacon_frame)) => {
+                            match parse_open_drone_id_message_pack(
+                                beacon_frame.vendor_specific_data,
+                            ) {
+                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
+                                Err(e) => {
+                                    eprintln!(
+                                        "Failed to parse Open Drone ID message pack: {:?}",
+                                        e
+                                    );
+                                    continue;
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
+                            continue;
+                        }
+                    }
                 }
             };
 
