@@ -70,6 +70,7 @@ pub async fn start_wifi_task(
 
             if wifi_interface.should_change_channel() {
                 wifi_interface.adjust_channel();
+                wifi_interface.update_last_odid_received(Utc::now());
             }
 
             let payload = remove_radiotap_header(data);
