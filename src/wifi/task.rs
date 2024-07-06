@@ -12,8 +12,8 @@ use crate::{
     },
     web::{insert_drone, update_drone, DroneDto, DroneUpdate},
     wifi::{
-        enable_monitor_mode, parse_action_frame, parse_beacon_frame,
-        parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
+        enable_monitor_mode, is_action_frame, is_beacon_frame, parse_action_frame,
+        parse_beacon_frame, parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
         remove_radiotap_header, WifiInterface, WifiInterfaceBuilder, WifiOpenDroneIDMessagePack,
         WIFI_ALLIANCE_OUI,
     },
@@ -80,56 +80,66 @@ pub async fn start_wifi_task(
 
             let payload = remove_radiotap_header(data);
 
-            let odid_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
-                Ok((_, frame)) => {
-                    println!("Parsed action frame, continuing on to parse SDA");
+            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
+            {
+                match parse_action_frame(payload) {
+                    Ok((_, frame)) => {
+                        println!("Parsed action frame, continuing on to parse SDA");
 
-                    match parse_service_descriptor_attribute(frame.body) {
-                        Ok((_, service_descriptor_attribute)) => {
-                            match parse_open_drone_id_message_pack(
-                                service_descriptor_attribute.service_info,
-                            ) {
-                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
-                                Err(e) => {
-                                    eprintln!(
-                                        "Failed to parse Open Drone ID message pack: {:?}",
-                                        e
-                                    );
-                                    continue;
+                        match parse_service_descriptor_attribute(frame.body) {
+                            Ok((_, service_descriptor_attribute)) => {
+                                match parse_open_drone_id_message_pack(
+                                    service_descriptor_attribute.service_info,
+                                ) {
+                                    Ok((_, open_drone_id_message_pack)) => {
+                                        Some(open_drone_id_message_pack)
+                                    }
+                                    Err(e) => {
+                                        eprintln!(
+                                            "Failed to parse Open Drone ID message pack: {:?}",
+                                            e
+                                        );
+                                        continue;
+                                    }
                                 }
                             }
-                        }
-                        Err(e) => {
-                            eprintln!("Failed to parse service descriptor attribute: {:?}", e);
-                            continue;
-                        }
-                    }
-                }
-                Err(e) => {
-                    println!("Failed action frame, parsing as beacon");
-                    // try to parse as Beacon
-                    match parse_beacon_frame(payload) {
-                        Ok((_, beacon_frame)) => {
-                            match parse_open_drone_id_message_pack(
-                                beacon_frame.vendor_specific_data,
-                            ) {
-                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
-                                Err(e) => {
-                                    eprintln!(
-                                        "Failed to parse Open Drone ID message pack: {:?}",
-                                        e
-                                    );
-                                    continue;
-                                }
+                            Err(e) => {
+                                eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                                continue;
                             }
                         }
-                        Err(e) => {
-                            eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
-                            continue;
-                        }
+                    }
+                    Err(e) => {
+                        println!("Failed action frame, parsing as beacon");
+                        // try to parse as Beacon
+                        continue;
                     }
                 }
+            } else if is_beacon_frame(payload) {
+                match parse_beacon_frame(payload) {
+                    Ok((_, beacon_frame)) => {
+                        match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
+                            Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
+                            Err(e) => {
+                                eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                None
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
+                        None
+                    }
+                }
+            } else {
+                None
             };
+
+            if odid_message_pack.is_none() {
+                continue;
+            }
+
+            let odid_message_pack = odid_message_pack.unwrap();
 
             println!("Received ODID message pack {:?}", odid_message_pack);
 
