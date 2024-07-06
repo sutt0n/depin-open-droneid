@@ -131,6 +131,8 @@ pub async fn start_wifi_task(
                 }
             };
 
+            println!("Received ODID message pack {:?}", odid_message_pack);
+
             let current_timestamp: DateTime<Utc> = Utc::now();
             wifi_interface.update_last_odid_received(current_timestamp);
 
