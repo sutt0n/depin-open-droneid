@@ -82,9 +82,8 @@ pub async fn start_wifi_task(
 
             let odid_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
                 Ok((_, frame)) => {
-                    if frame.oui != WIFI_ALLIANCE_OUI {
-                        continue;
-                    }
+                    println!("Parsed action frame, continuing on to parse SDA");
+
                     match parse_service_descriptor_attribute(frame.body) {
                         Ok((_, service_descriptor_attribute)) => {
                             match parse_open_drone_id_message_pack(
@@ -107,6 +106,7 @@ pub async fn start_wifi_task(
                     }
                 }
                 Err(e) => {
+                    println!("Failed action frame, parsing as beacon");
                     // try to parse as Beacon
                     match parse_beacon_frame(payload) {
                         Ok((_, beacon_frame)) => {
