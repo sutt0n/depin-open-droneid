@@ -24,7 +24,9 @@ pub async fn start_bluetooth_task(
     db_pool: Arc<Mutex<Pool<Postgres>>>,
     tx: Arc<Mutex<Sender<DroneUpdate>>>,
 ) -> JoinHandle<()> {
+    println!("Starting Bluetooth task.");
     tokio::spawn(async move {
+        println!("Inside async move for BT");
         let mut drones = drones.lock().await;
 
         let (_, session) = BluetoothSession::new().await.unwrap();
