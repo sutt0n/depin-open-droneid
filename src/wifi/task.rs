@@ -19,7 +19,7 @@ use crate::{
 };
 use tokio::sync::broadcast::Sender;
 
-pub fn start_wifi_task(
+pub async fn start_wifi_task(
     wifi_card: String,
     db_pool: Arc<Mutex<Pool<Postgres>>>,
     drones: Arc<Mutex<HashMap<String, Drone>>>,
