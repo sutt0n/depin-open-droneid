@@ -27,7 +27,6 @@ pub async fn start_bluetooth_task(
     println!("Starting Bluetooth task.");
     tokio::spawn(async move {
         println!("Inside async move for BT");
-        let mut drones = drones.lock().await;
 
         let (_, session) = BluetoothSession::new().await.unwrap();
         let mut events = session.event_stream().await.unwrap();
@@ -42,6 +41,8 @@ pub async fn start_bluetooth_task(
         println!("Scanning for Bluetooth advertisement data.");
 
         while let Some(event) = events.next().await {
+            println!("events!");
+            let mut drones = drones.lock().await;
             if let Some((device_id, message_type)) =
                 handle_bluetooth_event(&mut drones, device_name.as_str(), event).await
             {
