@@ -39,7 +39,6 @@ pub async fn start_wifi_task(
         let mut cap = Capture::from_device(wifi_card)
             .unwrap()
             .promisc(true)
-            .rfmon(true)
             .immediate_mode(true)
             .open();
 
@@ -74,6 +73,10 @@ pub async fn start_wifi_task(
             //     wifi_interface.update_last_odid_received(Utc::now());
             // }
 
+            if String::from_utf8_lossy(&data).contains("DroneBeacon") {
+                println!("DroneBeacon found {:?}", data);
+            }
+
             let payload = remove_radiotap_header(data);
 
             let odid_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
@@ -104,8 +107,6 @@ pub async fn start_wifi_task(
                 }
                 Err(e) => {
                     eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                    println!("Packet {:?}", payload);
-                    println!("Packet lossy {:?}", String::from_utf8_lossy(payload));
                     continue;
                 }
             };
