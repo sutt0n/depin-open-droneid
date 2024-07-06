@@ -104,6 +104,7 @@ pub async fn start_wifi_task(
                 Err(e) => {
                     eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
                     println!("Packet {:?}", payload);
+                    println!("Packet lossy {:?}", String::from_utf8_lossy(payload));
                     continue;
                 }
             };
