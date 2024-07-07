@@ -88,7 +88,7 @@ pub async fn start_wifi_task(
                 println!("Action frame found");
             }
 
-            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
+            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload, 0)
             {
                 match parse_action_frame(payload) {
                     Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
@@ -118,7 +118,7 @@ pub async fn start_wifi_task(
                         None
                     }
                 }
-            } else if is_beacon_frame(payload) {
+            } else if is_beacon_frame(payload, 0) {
                 match parse_beacon_frame(payload) {
                     Ok((_, beacon_frame)) => {
                         match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
