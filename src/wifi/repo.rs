@@ -69,6 +69,8 @@ pub fn parse_service_descriptor_attribute(
     let (input, message_counter) = le_u8(input)?;
 
     if service_info_length == 0 || service_info_length == 1 {
+        // create empty &[u8] if service_info_length is 0
+        let service_info: &[u8] = &[];
         return Ok((
             input,
             ServiceDescriptorAttribute {
@@ -80,7 +82,7 @@ pub fn parse_service_descriptor_attribute(
                 service_control,
                 service_info_length,
                 message_counter,
-                service_info: vec![],
+                service_info,
             },
         ));
     }
