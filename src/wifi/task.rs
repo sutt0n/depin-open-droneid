@@ -78,12 +78,17 @@ pub async fn start_wifi_task(
                 println!("DroneBeacon found {:?}", data);
             }
 
+            println!("is_action_frame: {}\n{:?}", is_action_frame(data), data);
+            println!("is_beacon_frame: {}\n{:?}", is_action_frame(data), data);
 
             let payload = remove_radiotap_header(data);
+            println!("----------------------------------------------");
 
-            println!("is_action_frame: {}", is_action_frame(payload));
-            println!("is_beacon_frame: {}", is_action_frame(payload));
+            println!("is_action_frame: {}\n{:?}", is_action_frame(payload), data);
+            println!("is_beacon_frame: {}\n{:?}", is_action_frame(payload),data );
 
+
+            println!("##############################################\n");
             let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
             {
                 match parse_action_frame(payload) {
