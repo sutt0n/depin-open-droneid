@@ -80,174 +80,164 @@ pub async fn start_wifi_task(
 
             let payload = remove_radiotap_header(data);
 
-            match libwifi::parse_frame(payload) {
-                Ok(frame) => match frame {
-                    libwifi::Frame::Beacon(beacon) => {
-                        let payload = beacon.station_info.data;
-                        println!("Beacon payload: {:?}", payload);
+            if is_beacon_frame(payload, 0) {
+                println!("Beacon frame found");
+            }
+
+            if is_action_frame(payload, 0) {
+                println!("Action frame found");
+            }
+
+            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
+            {
+                match parse_action_frame(payload) {
+                    Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
+                        Ok((_, service_descriptor_attribute)) => {
+                            match parse_open_drone_id_message_pack(
+                                service_descriptor_attribute.service_info,
+                            ) {
+                                Ok((_, open_drone_id_message_pack)) => {
+                                    Some(open_drone_id_message_pack)
+                                }
+                                Err(e) => {
+                                    eprintln!(
+                                        "Failed to parse Open Drone ID message pack: {:?}",
+                                        e
+                                    );
+                                    None
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to parse service descriptor attribute: {:?}", e);
+                            None
+                        }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed action frame, parsing as beacon: {:?}", e);
+                        None
                     }
-                    _ => {
+                }
+            } else if is_beacon_frame(payload) {
+                match parse_beacon_frame(payload) {
+                    Ok((_, beacon_frame)) => {
+                        match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
+                            Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
+                            Err(e) => {
+                                eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                None
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
+                        None
+                    }
+                }
+            } else {
+                None
+            };
+
+            if odid_message_pack.is_none() {
+                continue;
+            }
+
+            let odid_message_pack = odid_message_pack.unwrap();
+
+            println!("Received ODID message pack {:?}", odid_message_pack);
+
+            let current_timestamp: DateTime<Utc> = Utc::now();
+            wifi_interface.update_last_odid_received(current_timestamp);
+
+            let mut drone: Drone = DroneBuilder::default().build().unwrap();
+
+            for message in odid_message_pack.messages {
+                match RemoteIdMessage::from(message.message_type) {
+                    RemoteIdMessage::SystemMessage => {
+                        if let Ok((_, system_message)) = parse_system_message(&message.message_body)
+                        {
+                            drone.update_system_message(system_message);
+                        }
+                    }
+                    RemoteIdMessage::BasicId => {
+                        if let Ok((_, basic_id_message)) = parse_basic_id(&message.message_body) {
+                            drone.update_basic_id(basic_id_message);
+                        }
+                    }
+                    RemoteIdMessage::Location => {
+                        if let Ok((_, location_message)) = parse_location(&message.message_body) {
+                            drone.update_location(location_message);
+                        }
+                    }
+                    RemoteIdMessage::OperatorId => {
+                        if let Ok((_, operator_id_message)) =
+                            parse_operator_id(&message.message_body)
+                        {
+                            drone.update_operator(operator_id_message);
+                        }
+                    }
+                    m => {
+                        println!("Unknown message type: {:?} {:?}", message.message_type, m);
                         continue;
                     }
-                },
-                Err(err) => {
-                    if let libwifi::error::Error::Failure(_, bytes) = err {
-                        println!("bytes {bytes:?}");
-                    }
-                    continue;
                 }
             }
 
-            // let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
-            // {
-            //     match parse_action_frame(payload) {
-            //         Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
-            //             Ok((_, service_descriptor_attribute)) => {
-            //                 match parse_open_drone_id_message_pack(
-            //                     service_descriptor_attribute.service_info,
-            //                 ) {
-            //                     Ok((_, open_drone_id_message_pack)) => {
-            //                         Some(open_drone_id_message_pack)
-            //                     }
-            //                     Err(e) => {
-            //                         eprintln!(
-            //                             "Failed to parse Open Drone ID message pack: {:?}",
-            //                             e
-            //                         );
-            //                         None
-            //                     }
-            //                 }
-            //             }
-            //             Err(e) => {
-            //                 eprintln!("Failed to parse service descriptor attribute: {:?}", e);
-            //                 None
-            //             }
-            //         },
-            //         Err(e) => {
-            //             eprintln!("Failed action frame, parsing as beacon: {:?}", e);
-            //             None
-            //         }
-            //     }
-            // } else if is_beacon_frame(payload) {
-            //     match parse_beacon_frame(payload) {
-            //         Ok((_, beacon_frame)) => {
-            //             match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
-            //                 Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
-            //                 Err(e) => {
-            //                     eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
-            //                     None
-            //                 }
-            //             }
-            //         }
-            //         Err(e) => {
-            //             eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
-            //             None
-            //         }
-            //     }
-            // } else {
-            //     None
-            // };
-            //
-            // if odid_message_pack.is_none() {
-            //     continue;
-            // }
-            //
-            // let odid_message_pack = odid_message_pack.unwrap();
-            //
-            // println!("Received ODID message pack {:?}", odid_message_pack);
-            //
-            // let current_timestamp: DateTime<Utc> = Utc::now();
-            // wifi_interface.update_last_odid_received(current_timestamp);
-            //
-            // let mut drone: Drone = DroneBuilder::default().build().unwrap();
-            //
-            // for message in odid_message_pack.messages {
-            //     match RemoteIdMessage::from(message.message_type) {
-            //         RemoteIdMessage::SystemMessage => {
-            //             if let Ok((_, system_message)) = parse_system_message(&message.message_body)
-            //             {
-            //                 drone.update_system_message(system_message);
-            //             }
-            //         }
-            //         RemoteIdMessage::BasicId => {
-            //             if let Ok((_, basic_id_message)) = parse_basic_id(&message.message_body) {
-            //                 drone.update_basic_id(basic_id_message);
-            //             }
-            //         }
-            //         RemoteIdMessage::Location => {
-            //             if let Ok((_, location_message)) = parse_location(&message.message_body) {
-            //                 drone.update_location(location_message);
-            //             }
-            //         }
-            //         RemoteIdMessage::OperatorId => {
-            //             if let Ok((_, operator_id_message)) =
-            //                 parse_operator_id(&message.message_body)
-            //             {
-            //                 drone.update_operator(operator_id_message);
-            //             }
-            //         }
-            //         m => {
-            //             println!("Unknown message type: {:?} {:?}", message.message_type, m);
-            //             continue;
-            //         }
-            //     }
-            // }
-            //
-            // println!("Checking payload for drone {:?}", drone);
-            //
-            // let drone_id = if let Some(id) = drone.basic_id.as_ref() {
-            //     id.uas_id.clone()
-            // } else {
-            //     continue;
-            // };
-            //
-            // if drones.contains_key(&drone_id) {
-            //     let drone = drones.get_mut(&drone_id).unwrap();
-            //
-            //     if let Some(last_location) = drone.last_location.clone() {
-            //         drone.update_location(last_location);
-            //     }
-            //
-            //     if let Some(system_message) = drone.system_message.clone() {
-            //         drone.update_system_message(system_message);
-            //     }
-            //
-            //     if let Some(operator) = drone.operator.clone() {
-            //         drone.update_operator(operator);
-            //     }
-            //
-            //     if let Some(basic_id) = drone.basic_id.clone() {
-            //         drone.update_basic_id(basic_id);
-            //     }
-            // }
-            //
-            // if drone.payload_ready() && !drone.is_in_db {
-            //     println!("Payload ready for drone");
-            //
-            //     println!("Drone ID: {}", drone_id);
-            //
-            //     drones.insert(drone_id, drone.clone());
-            //
-            //     let drone_dto = DroneDto::from(drone.clone());
-            //
-            //     let db_pool = db_pool.lock().await;
-            //     let tx = tx.lock().await;
-            //
-            //     println!("Inserting drone into database");
-            //
-            //     let drone_dto = insert_drone(drone_dto, &db_pool, &tx).await;
-            //
-            //     drone.set_in_db(true, drone_dto.id);
-            // } else if drone.payload_ready() && drone.is_in_db {
-            //     let drone_dto = DroneDto::from(drone.clone());
-            //
-            //     let db_pool = db_pool.lock().await;
-            //     let tx = tx.lock().await;
-            //
-            //     update_drone(drone_dto, &db_pool, &tx).await;
-            // } else {
-            //     drones.insert(drone_id, drone);
-            // }
+            println!("Checking payload for drone {:?}", drone);
+
+            let drone_id = if let Some(id) = drone.basic_id.as_ref() {
+                id.uas_id.clone()
+            } else {
+                continue;
+            };
+
+            if drones.contains_key(&drone_id) {
+                let drone = drones.get_mut(&drone_id).unwrap();
+
+                if let Some(last_location) = drone.last_location.clone() {
+                    drone.update_location(last_location);
+                }
+
+                if let Some(system_message) = drone.system_message.clone() {
+                    drone.update_system_message(system_message);
+                }
+
+                if let Some(operator) = drone.operator.clone() {
+                    drone.update_operator(operator);
+                }
+
+                if let Some(basic_id) = drone.basic_id.clone() {
+                    drone.update_basic_id(basic_id);
+                }
+            }
+
+            if drone.payload_ready() && !drone.is_in_db {
+                println!("Payload ready for drone");
+
+                println!("Drone ID: {}", drone_id);
+
+                drones.insert(drone_id, drone.clone());
+
+                let drone_dto = DroneDto::from(drone.clone());
+
+                let db_pool = db_pool.lock().await;
+                let tx = tx.lock().await;
+
+                println!("Inserting drone into database");
+
+                let drone_dto = insert_drone(drone_dto, &db_pool, &tx).await;
+
+                drone.set_in_db(true, drone_dto.id);
+            } else if drone.payload_ready() && drone.is_in_db {
+                let drone_dto = DroneDto::from(drone.clone());
+
+                let db_pool = db_pool.lock().await;
+                let tx = tx.lock().await;
+
+                update_drone(drone_dto, &db_pool, &tx).await;
+            } else {
+                drones.insert(drone_id, drone);
+            }
         }
     })
 }
