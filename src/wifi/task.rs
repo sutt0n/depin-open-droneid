@@ -78,7 +78,11 @@ pub async fn start_wifi_task(
                 println!("DroneBeacon found {:?}", data);
             }
 
+
             let payload = remove_radiotap_header(data);
+
+            println!("is_action_frame: {}", is_action_frame(payload));
+            println!("is_beacon_frame: {}", is_action_frame(payload));
 
             let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload)
             {
