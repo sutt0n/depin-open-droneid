@@ -68,6 +68,30 @@ pub fn parse_service_descriptor_attribute(
     let (input, service_info_length) = le_u8(input)?;
     let (input, message_counter) = le_u8(input)?;
 
+    if service_info_length == 0 || service_info_length == 1 {
+        return Ok((
+            input,
+            ServiceDescriptorAttribute {
+                attribute_id,
+                attribute_length,
+                service_id: service_id.try_into().unwrap(),
+                instance_id,
+                requestor_id,
+                service_control,
+                service_info_length,
+                message_counter,
+                service_info: vec![],
+            },
+        ));
+    }
+
+    if service_info_length < 1 {
+        return Err(nom::Err::Failure(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::Verify,
+        )));
+    }
+
     let (input, service_info) = take(service_info_length - 1)(input)?;
 
     Ok((
