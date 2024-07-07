@@ -78,24 +78,7 @@ pub async fn start_wifi_task(
                 println!("DroneBeacon found {:?}", data);
             }
 
-            println!("is_action_frame: {}\n{:?}", is_action_frame(data), data);
-            println!("is_beacon_frame: {}\n{:?}", is_action_frame(data), data);
-
             let payload = remove_radiotap_header(data);
-            println!("----------------------------------------------");
-
-            println!(
-                "is_action_frame: {}\n{:?}",
-                is_action_frame(payload),
-                payload
-            );
-            println!(
-                "is_beacon_frame: {}\n{:?}",
-                is_action_frame(payload),
-                payload
-            );
-
-            println!("##############################################\n");
 
             match libwifi::parse_frame(payload) {
                 Ok(frame) => match frame {
