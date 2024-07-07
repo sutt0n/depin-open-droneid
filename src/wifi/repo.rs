@@ -1,11 +1,13 @@
 use nom::bytes::complete::take;
-use nom::number::complete::{le_u16, le_u8};
+use nom::number::complete::{le_u16, le_u32, le_u8};
 use nom::IResult;
 use radiotap::Radiotap;
 use std::convert::TryInto;
 
+use crate::wifi::{ASDSTAN_OUI, WIFI_ALLIANCE_OUI};
+
 use super::{
-    WifiActionFrame as ActionFrame, WifiOpenDroneIDMessage as OpenDroneIDMessage,
+    WifiActionFrame as ActionFrame, WifiBeaconFrame, WifiOpenDroneIDMessage as OpenDroneIDMessage,
     WifiOpenDroneIDMessagePack as OpenDroneIDMessagePack,
     WifiServiceDescriptorAttribute as ServiceDescriptorAttribute,
 };
@@ -18,7 +20,9 @@ pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDron
     let (input, single_msg_size) = le_u8(input)?;
     let (mut input, num_messages) = le_u8(input)?;
 
-    println!("length of input: {}", input.len());
+    println!("message_pack_type: {:?}", message_type_and_version_pack);
+    println!("single_msg_size: {:?}", single_msg_size);
+    println!("num_messages: {:?}", num_messages);
 
     let mut messages = Vec::new();
 
@@ -63,6 +67,33 @@ pub fn parse_service_descriptor_attribute(
     let (input, service_control) = le_u8(input)?;
     let (input, service_info_length) = le_u8(input)?;
     let (input, message_counter) = le_u8(input)?;
+
+    if service_info_length == 0 || service_info_length == 1 {
+        // create empty &[u8] if service_info_length is 0
+        let service_info: &[u8] = &[];
+        return Ok((
+            input,
+            ServiceDescriptorAttribute {
+                attribute_id,
+                attribute_length,
+                service_id: service_id.try_into().unwrap(),
+                instance_id,
+                requestor_id,
+                service_control,
+                service_info_length,
+                message_counter,
+                service_info,
+            },
+        ));
+    }
+
+    if service_info_length < 1 {
+        return Err(nom::Err::Failure(nom::error::Error::new(
+            input,
+            nom::error::ErrorKind::Verify,
+        )));
+    }
+
     let (input, service_info) = take(service_info_length - 1)(input)?;
 
     Ok((
@@ -114,6 +145,54 @@ pub fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
             oui: oui.try_into().unwrap(),
             oui_type: oui_type[0],
             body,
+        },
+    ))
+}
+
+pub fn parse_beacon_frame(input: &[u8]) -> IResult<&[u8], WifiBeaconFrame> {
+    let (input, frame_control) = le_u16(input)?;
+    let (input, duration) = le_u16(input)?;
+    let (input, destination_addr) = take(6usize)(input)?;
+    let (input, source_addr) = take(6usize)(input)?;
+    let (input, bssid) = take(6usize)(input)?;
+    let (input, sequence_control) = le_u16(input)?;
+    let (input, _fixed_parameters) = take(12usize)(input)?;
+
+    let mut tagged_parameters = input;
+    let mut vendor_specific_data: &[u8] = &[];
+
+    while !tagged_parameters.is_empty() {
+        let (new_input, tag_number) = le_u8(tagged_parameters)?;
+
+        if tag_number == 0xdd {
+            let (new_input, tag_length) = le_u8(new_input)?;
+            let (new_input, tag_oui) = take(3usize)(new_input)?;
+
+            if tag_oui == WIFI_ALLIANCE_OUI || tag_oui == ASDSTAN_OUI {
+                let (new_input, _tag_oui_type) = le_u8(new_input)?;
+                let (new_input, _message_counter) = le_u8(new_input)?;
+
+                let (_, tag_data) = take(tag_length as usize - 4)(new_input)?;
+
+                vendor_specific_data = tag_data;
+                tagged_parameters = new_input;
+                break;
+            }
+        }
+
+        tagged_parameters = new_input;
+    }
+
+    Ok((
+        tagged_parameters,
+        WifiBeaconFrame {
+            frame_control,
+            duration,
+            destination_address: destination_addr.try_into().unwrap(),
+            source_address: source_addr.try_into().unwrap(),
+            bssid: bssid.try_into().unwrap(),
+            sequence_control,
+            vendor_specific_data,
         },
     ))
 }

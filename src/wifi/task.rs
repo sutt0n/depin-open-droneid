@@ -12,9 +12,10 @@ use crate::{
     },
     web::{insert_drone, update_drone, DroneDto, DroneUpdate},
     wifi::{
-        enable_monitor_mode, parse_action_frame, parse_open_drone_id_message_pack,
-        parse_service_descriptor_attribute, remove_radiotap_header, WifiInterface,
-        WifiInterfaceBuilder, WifiOpenDroneIDMessagePack, WIFI_ALLIANCE_OUI,
+        enable_monitor_mode, is_action_frame, is_beacon_frame, parse_action_frame,
+        parse_beacon_frame, parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
+        remove_radiotap_header, WifiInterface, WifiInterfaceBuilder, WifiOpenDroneIDMessagePack,
+        WIFI_ALLIANCE_OUI,
     },
 };
 use tokio::sync::broadcast::Sender;
@@ -79,38 +80,71 @@ pub async fn start_wifi_task(
 
             let payload = remove_radiotap_header(data);
 
-            let odid_message_pack: WifiOpenDroneIDMessagePack = match parse_action_frame(payload) {
-                Ok((_, frame)) => {
-                    if frame.oui != WIFI_ALLIANCE_OUI {
-                        continue;
-                    }
-                    match parse_service_descriptor_attribute(frame.body) {
+            if is_beacon_frame(payload, 0) {
+                println!("Beacon frame found");
+            }
+
+            if is_action_frame(payload, 0) {
+                println!("Action frame found");
+            }
+
+            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload, 0)
+            {
+                match parse_action_frame(payload) {
+                    Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
                         Ok((_, service_descriptor_attribute)) => {
                             match parse_open_drone_id_message_pack(
                                 service_descriptor_attribute.service_info,
                             ) {
-                                Ok((_, open_drone_id_message_pack)) => open_drone_id_message_pack,
+                                Ok((_, open_drone_id_message_pack)) => {
+                                    Some(open_drone_id_message_pack)
+                                }
                                 Err(e) => {
                                     eprintln!(
                                         "Failed to parse Open Drone ID message pack: {:?}",
                                         e
                                     );
-                                    continue;
+                                    None
                                 }
                             }
                         }
                         Err(e) => {
                             eprintln!("Failed to parse service descriptor attribute: {:?}", e);
-                            continue;
+                            None
                         }
+                    },
+                    Err(e) => {
+                        eprintln!("Failed action frame, parsing as beacon: {:?}", e);
+                        None
                     }
                 }
-                Err(e) => {
-                    eprintln!("Failed to parse IEEE 802.11 action frame: {:?}", e);
-                    eprintln!("Data: {:?}", String::from_utf8_lossy(data));
-                    continue;
+            } else if is_beacon_frame(payload, 0) {
+                match parse_beacon_frame(payload) {
+                    Ok((_, beacon_frame)) => {
+                        match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
+                            Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
+                            Err(e) => {
+                                eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                None
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Failed to parse Beacon/Action frames: {:?}", e);
+                        None
+                    }
                 }
+            } else {
+                None
             };
+
+            if odid_message_pack.is_none() {
+                continue;
+            }
+
+            let odid_message_pack = odid_message_pack.unwrap();
+
+            println!("Received ODID message pack {:?}", odid_message_pack);
 
             let current_timestamp: DateTime<Utc> = Utc::now();
             wifi_interface.update_last_odid_received(current_timestamp);

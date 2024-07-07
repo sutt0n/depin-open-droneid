@@ -36,7 +36,6 @@ impl WifiInterface {
     }
 
     pub fn adjust_channel(&mut self) {
-
         match self.channel {
             1 => self.channel = 6,
             6 => self.channel = 11,

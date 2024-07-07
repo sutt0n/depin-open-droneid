@@ -1,4 +1,5 @@
 pub const WIFI_ALLIANCE_OUI: [u8; 3] = [0x50, 0x6f, 0x9a];
+pub const ASDSTAN_OUI: [u8; 3] = [0xfa, 0x0b, 0xbc];
 pub const NAN_SERVICE_ID: [u8; 6] = [0x88, 0x69, 0x19, 0x9d, 0x92, 0x09];
 
 #[derive(Debug)]
@@ -17,6 +18,17 @@ pub struct WifiActionFrame<'a> {
     pub oui: [u8; 3], // wi-fi alliance, 0x50, 0x6f, 0x9a
     pub oui_type: u8,
     pub body: &'a [u8],
+}
+
+#[derive(Debug)]
+pub struct WifiBeaconFrame<'a> {
+    pub frame_control: u16,
+    pub duration: u16,
+    pub destination_address: [u8; 6],
+    pub source_address: [u8; 6],
+    pub bssid: [u8; 6],
+    pub sequence_control: u16,
+    pub vendor_specific_data: &'a [u8],
 }
 
 #[derive(Debug)]
@@ -53,8 +65,8 @@ pub struct WifiOpenDroneIDMessage {
 pub mod tests {
     use crate::odid::{parse_location, Location};
     use crate::wifi::{
-        parse_action_frame, parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
-        remove_radiotap_header,
+        parse_action_frame, parse_beacon_frame, parse_open_drone_id_message_pack,
+        parse_service_descriptor_attribute, remove_radiotap_header,
     };
 
     use super::*;
@@ -78,6 +90,74 @@ pub mod tests {
             .collect();
 
         Ok(bytes)
+    }
+
+    #[test]
+    fn test_parse_beacon_frame() {
+        let wifi_data: Vec<u8> = read_fixture("fixtures/wlan_beacon_packet_data.txt").unwrap();
+
+        let frame_data = &wifi_data[..];
+
+        let payload = remove_radiotap_header(frame_data);
+
+        let beacon_frame: Option<WifiBeaconFrame> = match parse_beacon_frame(payload) {
+            Ok((_, frame)) => Some(frame),
+            Err(e) => {
+                eprintln!("Failed to parse IEEE 802.11 beacon frame: {:?}", e);
+                None
+            }
+        };
+
+        assert_eq!(beacon_frame.is_some(), true);
+
+        let beacon_frame = beacon_frame.unwrap();
+
+        let odid_message_pack: Option<WifiOpenDroneIDMessagePack> =
+            match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
+                Ok((_, message_pack)) => Some(message_pack),
+                Err(e) => {
+                    eprintln!("Failed to parse Open Drone ID message pack: {:?}", e);
+                    None
+                }
+            };
+
+        assert_eq!(odid_message_pack.is_some(), true);
+
+        let open_drone_id_message_pack = odid_message_pack.unwrap();
+
+        assert_eq!(open_drone_id_message_pack.version, 0x02);
+        assert_eq!(open_drone_id_message_pack.message_type, 0xf);
+        assert!(open_drone_id_message_pack.version <= 0xf); // 0x0 <= x <= 0xf
+        assert_eq!(open_drone_id_message_pack.single_msg_size, 0x19);
+        assert_eq!(open_drone_id_message_pack.num_messages, 0x4);
+
+        // first message basic id
+        assert_eq!(open_drone_id_message_pack.messages[0].message_type, 0x0);
+
+        // second message system message
+        assert_eq!(open_drone_id_message_pack.messages[1].message_type, 0x4);
+
+        // third message location
+        assert_eq!(open_drone_id_message_pack.messages[2].message_type, 0x1);
+
+        let location: Option<Location> =
+            match parse_location(&open_drone_id_message_pack.messages[2].message_body) {
+                Ok((_, location)) => Some(location),
+                Err(e) => {
+                    eprintln!("Failed to parse location message: {:?}", e);
+                    None
+                }
+            };
+
+        assert_eq!(location.is_some(), true);
+
+        let location = location.unwrap();
+
+        assert_eq!(location.latitude_int, 358025796);
+        assert_eq!(location.longitude_int, -907110086);
+
+        // fourth message self id
+        assert_eq!(open_drone_id_message_pack.messages[3].message_type, 0x3);
     }
 
     #[test]
