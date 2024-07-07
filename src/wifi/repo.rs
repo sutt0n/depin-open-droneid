@@ -68,7 +68,7 @@ pub fn parse_service_descriptor_attribute(
     let (input, service_info_length) = le_u8(input)?;
     let (input, message_counter) = le_u8(input)?;
 
-    if input.len() < service_info_length as usize {
+    if input.len() <= (service_info_length + 1) as usize {
         return Err(nom::Err::Failure(nom::error::Error::new(
             input,
             nom::error::ErrorKind::Eof,
