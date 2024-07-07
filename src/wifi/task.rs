@@ -103,20 +103,19 @@ pub async fn start_wifi_task(
                                             "Failed to parse Open Drone ID message pack: {:?}",
                                             e
                                         );
-                                        continue;
+                                        None
                                     }
                                 }
                             }
                             Err(e) => {
                                 eprintln!("Failed to parse service descriptor attribute: {:?}", e);
-                                continue;
+                                None
                             }
                         }
                     }
                     Err(e) => {
-                        println!("Failed action frame, parsing as beacon");
-                        // try to parse as Beacon
-                        continue;
+                        eprintln!("Failed action frame, parsing as beacon: {:?}", e);
+                        None
                     }
                 }
             } else if is_beacon_frame(payload) {
