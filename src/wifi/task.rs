@@ -84,8 +84,8 @@ pub async fn start_wifi_task(
             let payload = remove_radiotap_header(data);
             println!("----------------------------------------------");
 
-            println!("is_action_frame: {}\n{:?}", is_action_frame(payload), data);
-            println!("is_beacon_frame: {}\n{:?}", is_action_frame(payload),data );
+            println!("is_action_frame: {}\n{:?}", is_action_frame(payload), payload);
+            println!("is_beacon_frame: {}\n{:?}", is_action_frame(payload), payload);
 
 
             println!("##############################################\n");
