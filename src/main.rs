@@ -12,7 +12,7 @@ mod wifi;
 
 use tokio::sync::Mutex;
 use web::{init_router, start_webserver};
-use wifi::start_wifi_task;
+use wifi::{start_wifi_task, WifiInterfaceBuilder};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -37,11 +37,32 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let update_tx = Arc::new(Mutex::new(tx));
     let db_pool = Arc::new(Mutex::new(sqlx_connection));
 
+    let wifi_interface = WifiInterfaceBuilder::default()
+        .name(String::from(wifi_device_name))
+        .build()
+        .unwrap();
+
+    let wifi_interface = Arc::new(Mutex::new(wifi_interface));
+    let wifi_interface_clone = Arc::clone(&wifi_interface);
+
+    let wifi_interface_timer = tokio::spawn(async move {
+        let wifi_interface = wifi_interface_clone;
+        loop {
+            let mut wifi_interface = wifi_interface.lock().await;
+            if wifi_interface.should_change_channel() {
+                wifi_interface.adjust_channel();
+            }
+
+            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
+        }
+    });
+
     let wifi_task = start_wifi_task(
         String::from(wifi_device_name),
         Arc::clone(&db_pool),
         Arc::clone(&drones),
         Arc::clone(&update_tx),
+        Arc::clone(&wifi_interface),
     )
     .await;
 

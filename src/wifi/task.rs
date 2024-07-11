@@ -15,30 +15,32 @@ use crate::{
     wifi::{
         enable_monitor_mode, is_action_frame, is_beacon_frame, parse_action_frame,
         parse_beacon_frame, parse_open_drone_id_message_pack, parse_service_descriptor_attribute,
-        remove_radiotap_header, WifiInterface, WifiInterfaceBuilder, WifiOpenDroneIDMessagePack,
-        WIFI_ALLIANCE_OUI,
+        remove_radiotap_header, WifiOpenDroneIDMessagePack,
     },
 };
 use tokio::sync::broadcast::Sender;
+
+use super::WifiInterface;
 
 pub async fn start_wifi_task(
     wifi_card: String,
     db_pool: Arc<Mutex<Pool<Postgres>>>,
     drones: Arc<Mutex<HashMap<String, Drone>>>,
     tx: Arc<Mutex<Sender<DroneUpdate>>>,
+    wifi_interface: Arc<Mutex<WifiInterface>>,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
         let mut drones = drones.lock().await;
-        let wifi_card = wifi_card.as_str();
+        let wifi_card = wifi_card.as_str().to_owned();
 
-        if let Err(e) = enable_monitor_mode(wifi_card) {
+        if let Err(e) = enable_monitor_mode(&wifi_card) {
             eprintln!("Error: {}", e);
             return;
         }
 
         println!("Using device: {}", wifi_card);
 
-        let mut cap = Capture::from_device(wifi_card)
+        let mut cap = Capture::from_device(&*wifi_card)
             .unwrap()
             .promisc(true)
             .immediate_mode(true)
@@ -61,19 +63,8 @@ pub async fn start_wifi_task(
             .set_datalink(Linktype::IEEE802_11_RADIOTAP)
             .unwrap();
 
-        let mut wifi_interface: WifiInterface = WifiInterfaceBuilder::default()
-            .channel(6)
-            .name(wifi_card.to_string())
-            .build()
-            .unwrap();
-
         while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
             let data = packet.data;
-
-            if wifi_interface.should_change_channel() {
-                wifi_interface.adjust_channel();
-                wifi_interface.update_last_odid_received(Utc::now());
-            }
 
             if String::from_utf8_lossy(&data).contains("DroneBeacon") {
                 debug!("DroneBeacon found {:?}", data);
@@ -152,6 +143,8 @@ pub async fn start_wifi_task(
             }
 
             let current_timestamp: DateTime<Utc> = Utc::now();
+
+            let mut wifi_interface = wifi_interface.lock().await;
             wifi_interface.update_last_odid_received(current_timestamp);
 
             let mut drone: Drone = DroneBuilder::default().build().unwrap();
