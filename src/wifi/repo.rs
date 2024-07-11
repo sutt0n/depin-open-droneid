@@ -20,10 +20,6 @@ pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDron
     let (input, single_msg_size) = le_u8(input)?;
     let (mut input, num_messages) = le_u8(input)?;
 
-    println!("message_pack_type: {:?}", message_type_and_version_pack);
-    println!("single_msg_size: {:?}", single_msg_size);
-    println!("num_messages: {:?}", num_messages);
-
     let mut messages = Vec::new();
 
     for _ in 1..=num_messages {
