@@ -142,7 +142,7 @@ pub async fn start_wifi_task(
 
             let odid_message_pack = odid_message_pack.unwrap();
 
-            if odid_message_pack.messages.len() > 1 {
+            if odid_message_pack.messages.len() > 0 {
                 println!("Received ODID message pack {:?}", odid_message_pack);
             } else {
                 continue;
