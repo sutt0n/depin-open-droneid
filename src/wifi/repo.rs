@@ -193,7 +193,7 @@ pub fn parse_beacon_frame(input: &[u8]) -> IResult<&[u8], WifiBeaconFrame> {
     ))
 }
 
-pub fn remove_radiotap_header(input: &[u8]) -> &[u8] {
+pub fn remove_radiotap_header(input: &[u8]) -> Option<&[u8]> {
     let radiotap: Option<Radiotap> = match Radiotap::from_bytes(input) {
         Ok(radiotap) => Some(radiotap),
         Err(error) => {
@@ -206,8 +206,8 @@ pub fn remove_radiotap_header(input: &[u8]) -> &[u8] {
     };
 
     if let Some(radiotap) = radiotap {
-        &input[radiotap.header.length..]
+        Some(&input[radiotap.header.length..])
     } else {
-        input
+        None
     }
 }

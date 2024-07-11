@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let wifi_interface = Arc::new(Mutex::new(wifi_interface));
     let wifi_interface_clone = Arc::clone(&wifi_interface);
 
-    let wifi_interface_timer = tokio::spawn(async move {
+    let _ = tokio::spawn(async move {
         let wifi_interface = wifi_interface_clone;
         loop {
             let mut wifi_interface = wifi_interface.lock().await;

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use chrono::{DateTime, Utc};
-use log::{info, warn, debug};
+use log::{info, warn, debug, error};
 use pcap::{Capture, Device, Linktype};
 use sqlx::{Pool, Postgres};
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -70,7 +70,13 @@ pub async fn start_wifi_task(
                 debug!("DroneBeacon found {:?}", data);
             }
 
-            let payload = remove_radiotap_header(data);
+            let payload: Option<&[u8]> = remove_radiotap_header(data);
+
+            if payload.is_none() {
+                continue;
+            }
+
+            let payload = payload.unwrap();
 
             if is_beacon_frame(payload, 0) {
                 debug!("Beacon frame found");
