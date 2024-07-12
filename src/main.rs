@@ -21,6 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let drones: Arc<Mutex<HashMap<String, Drone>>> = Arc::new(Mutex::new(HashMap::new()));
 
+    env_logger::builder().filter_level(log::LevelFilter::Trace).init();
+
     let conn_url =
         std::env::var("DATABASE_URL").expect("Env var DATABASE_URL is required for this example.");
 
