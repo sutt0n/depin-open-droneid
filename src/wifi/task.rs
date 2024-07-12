@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use chrono::{DateTime, Utc};
-use log::{info, warn, debug, error};
+use log::{info, warn, debug, error, trace};
 use pcap::{Capture, Device, Linktype};
 use sqlx::{Pool, Postgres};
 use tokio::{sync::Mutex, task::JoinHandle};
@@ -79,11 +79,11 @@ pub async fn start_wifi_task(
             let payload = payload.unwrap();
 
             if is_beacon_frame(payload, 0) {
-                debug!("Beacon frame found");
+                trace!("Beacon frame found");
             }
 
             if is_action_frame(payload, 0) {
-                debug!("Action frame found");
+                trace!("Action frame found");
             }
 
             let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload, 0)
@@ -99,20 +99,21 @@ pub async fn start_wifi_task(
                                 }
                                 Err(e) => {
                                     debug!(
-                                        "Failed to parse Open Drone ID message pack: {:?}",
+                                        "[action frame] Failed to parse Open Drone ID message pack: {:?}",
                                         e
                                     );
+                                    debug!("data: {:?}", data);
                                     None
                                 }
                             }
                         }
                         Err(e) => {
-                            debug!("Failed to parse service descriptor attribute: {:?}", e);
+                            trace!("Failed to parse service descriptor attribute: {:?}", e);
                             None
                         }
                     },
                     Err(e) => {
-                        debug!("Failed action frame: {:?}", e);
+                        trace!("Failed action frame: {:?}", e);
                         None
                     }
                 }
@@ -122,13 +123,14 @@ pub async fn start_wifi_task(
                         match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
                             Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
                             Err(e) => {
-                                debug!("Failed to parse Open Drone ID message pack: {:?}", e);
+                                debug!("[beacon frame] Failed to parse Open Drone ID message pack: {:?}", e);
+                                debug!("data: {:?}", data);
                                 None
                             }
                         }
                     }
                     Err(e) => {
-                        debug!("Failed to parse Beacon/Action frames: {:?}", e);
+                        trace!("Failed to parse Beacon/Action frames: {:?}", e);
                         None
                     }
                 }
