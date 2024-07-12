@@ -16,7 +16,7 @@ pub struct WifiInterface {
 
 impl WifiInterface {
     // Time in seconds to change the channel
-    const TIME_TO_CHANGE_CHANNEL: i64 = 10;
+    const TIME_TO_CHANGE_CHANNEL: i64 = 5;
 
     pub fn update_last_odid_received(&mut self, timestamp: DateTime<Utc>) {
         self.last_odid_received = Some(timestamp);
@@ -38,20 +38,9 @@ impl WifiInterface {
 
     pub fn adjust_channel(&mut self) {
         match self.channel {
-            1 => self.channel = 2,
-            2 => self.channel = 3,
-            3 => self.channel = 4,
-            4 => self.channel = 5,
-            5 => self.channel = 6,
-            6 => self.channel = 7,
-            7 => self.channel = 8,
-            8 => self.channel = 9,
-            9 => self.channel = 10,
-            10 => self.channel = 11,
-            11 => self.channel = 12,
-            12 => self.channel = 13,
-            13 => self.channel = 14,
-            14 => self.channel = 1,
+            1 => self.channel = 6,
+            6 => self.channel = 11,
+            11 => self.channel = 1,
             _ => self.channel = 6,
         }
 
