@@ -15,8 +15,8 @@ pub struct WifiInterface {
 }
 
 impl WifiInterface {
-    // Time in milliseconds to change the channel
-    const TIME_TO_CHANGE_CHANNEL: i64 = 100;
+    // Time in seconds to change the channel
+    const TIME_TO_CHANGE_CHANNEL: i64 = 30;
 
     pub fn update_last_odid_received(&mut self, timestamp: DateTime<Utc>) {
         self.last_odid_received = Some(timestamp);
@@ -29,7 +29,7 @@ impl WifiInterface {
             Some(last_odid_received) => {
                 let time_diff = current_time
                     .signed_duration_since(last_odid_received)
-                    .num_milliseconds();
+                    .num_seconds();
                 time_diff > WifiInterface::TIME_TO_CHANGE_CHANNEL
             }
             None => true,

@@ -69,6 +69,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if wifi_interface.should_change_channel() {
                 wifi_interface.adjust_channel();
             }
+
+            tokio::time::sleep(tokio::time::Duration::from_millis(250)).await;
         }
     });
 
