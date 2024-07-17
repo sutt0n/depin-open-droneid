@@ -345,9 +345,6 @@ export const Settings = defineComponent({
             </div>
             <div v-if="open" style="display: grid; grid-template-columns: repeat(2, 1fr); grid-gap: 0.25rem;">
             
-                <label for="google-maps-key">Google Maps API Key:</label>
-                <input id="google-maps-key" type="text" v-model="settings.google_maps_api_key">
-            
                 <label for="activity_offset">Activity Offset (in m):</label>
                 <input id="activity_offset" type="number" v-model="settings.activity_offset_in_m" min="1" max="60">
             
