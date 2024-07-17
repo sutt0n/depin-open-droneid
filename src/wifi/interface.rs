@@ -15,8 +15,8 @@ pub struct WifiInterface {
 }
 
 impl WifiInterface {
-    // Time in seconds to change the channel
-    const TIME_TO_CHANGE_CHANNEL: i64 = 10;
+    // Time in milliseconds to change the channel
+    const TIME_TO_CHANGE_CHANNEL: i64 = 100;
 
     pub fn update_last_odid_received(&mut self, timestamp: DateTime<Utc>) {
         self.last_odid_received = Some(timestamp);
@@ -29,7 +29,7 @@ impl WifiInterface {
             Some(last_odid_received) => {
                 let time_diff = current_time
                     .signed_duration_since(last_odid_received)
-                    .num_seconds();
+                    .num_milliseconds();
                 time_diff > WifiInterface::TIME_TO_CHANGE_CHANNEL
             }
             None => true,
@@ -93,16 +93,6 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
     // Change channel to 6
     let _ = Command::new("iwconfig")
         .args([device, "channel", "6"])
-        .output()
-        .expect("failed to execute process");
-
-    Ok(())
-}
-
-pub fn disable_monitor_mode(device: &str) -> Result<(), String> {
-    // Disable monitoring mode using airmon-ng
-    let stop_mon = Command::new("sudo")
-        .args(["airmon-ng", "stop", device])
         .output()
         .expect("failed to execute process");
 

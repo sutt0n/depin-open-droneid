@@ -1,7 +1,6 @@
 use std::{collections::HashMap, sync::Arc};
 
-use bluetooth::start_bluetooth_task;
-use bluez_async::DeviceId;
+use clap::{command, arg};
 use drone::Drone;
 
 mod bluetooth;
@@ -16,8 +15,24 @@ use wifi::{start_wifi_task, WifiInterfaceBuilder};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let bluetooth_device_name = "hci0";
-    let wifi_device_name = "wlx08beac26e3e8";
+    // let bluetooth_device_name = "hci0";
+    // let wifi_device_name = "wlx08beac26e3e8";
+
+    // use clap for -w and -b for wifi interface and bluetooth interface
+    let matches = command!()
+        .arg(arg!(-w --wifi <INTERFACE> "WiFi interface name.").required(true))
+        .arg(arg!(-b --bluetooth <INTERFACE> "Bluetooth interface name.").required(false))
+        .get_matches();
+
+    let wifi_device_name = matches.get_one::<String>("wifi");
+
+    if wifi_device_name.is_none() {
+        panic!("WiFi interface name is required.");
+    }
+
+    let wifi_device_name = wifi_device_name.unwrap();
+
+    // let bluetooth_device_name = matches.get_one::<String>("bluetooth");
 
     let drones: Arc<Mutex<HashMap<String, Drone>>> = Arc::new(Mutex::new(HashMap::new()));
 
@@ -54,8 +69,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if wifi_interface.should_change_channel() {
                 wifi_interface.adjust_channel();
             }
-
-            tokio::time::sleep(tokio::time::Duration::from_secs(10)).await;
         }
     });
 
