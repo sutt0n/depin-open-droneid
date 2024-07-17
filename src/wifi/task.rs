@@ -30,7 +30,6 @@ pub async fn start_wifi_task(
     wifi_interface: Arc<Mutex<WifiInterface>>,
 ) -> JoinHandle<()> {
     tokio::spawn(async move {
-        let mut drones = drones.lock().await;
         let wifi_card = wifi_card.as_str().to_owned();
 
         if let Err(e) = enable_monitor_mode(&wifi_card) {
@@ -196,6 +195,8 @@ pub async fn start_wifi_task(
             } else {
                 continue;
             };
+
+            let mut drones = drones.lock().await;
 
             if drones.contains_key(&drone_id) {
                 let drone = drones.get_mut(&drone_id).unwrap();
