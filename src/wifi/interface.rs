@@ -2,7 +2,7 @@ use std::process::Command;
 
 use chrono::{DateTime, Utc};
 use derive_builder::Builder;
-use log::debug;
+use log::trace;
 
 #[derive(Debug, Builder, Clone)]
 pub struct WifiInterface {
@@ -55,7 +55,7 @@ impl WifiInterface {
             _ => self.channel = 6,
         }
 
-        debug!("Adjusting channel to {}", self.channel);
+        trace!("Adjusting channel to {}", self.channel);
 
         self.last_odid_received = None;
 
