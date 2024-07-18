@@ -1,5 +1,5 @@
 use nom::bytes::complete::take;
-use nom::number::complete::{le_u16, le_u32, le_u8};
+use nom::number::complete::{le_u16, le_u8};
 use nom::IResult;
 use radiotap::Radiotap;
 use std::convert::TryInto;
@@ -12,7 +12,7 @@ use super::{
     WifiServiceDescriptorAttribute as ServiceDescriptorAttribute,
 };
 
-pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
+pub async fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
     let (input, message_type_and_version_pack) = le_u8(input)?;
     let message_pack_type = message_type_and_version_pack >> 4;
     let version_pack = message_type_and_version_pack & 0x0F;
@@ -52,7 +52,7 @@ pub fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDron
     ))
 }
 
-pub fn parse_service_descriptor_attribute(
+pub async fn parse_service_descriptor_attribute(
     input: &[u8],
 ) -> IResult<&[u8], ServiceDescriptorAttribute> {
     let (input, attribute_id) = le_u8(input)?;
@@ -108,7 +108,7 @@ pub fn parse_service_descriptor_attribute(
     ))
 }
 
-pub fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
+pub async fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
     let (input, frame_control) = le_u16(input)?;
     let frame_control_version = (frame_control & 0b00000011) as u8;
     let frame_control_type = ((frame_control & 0b00001100) >> 2) as u8;
@@ -145,7 +145,7 @@ pub fn parse_action_frame(input: &[u8]) -> IResult<&[u8], ActionFrame> {
     ))
 }
 
-pub fn parse_beacon_frame(input: &[u8]) -> IResult<&[u8], WifiBeaconFrame> {
+pub async fn parse_beacon_frame(input: &[u8]) -> IResult<&[u8], WifiBeaconFrame> {
     let (input, frame_control) = le_u16(input)?;
     let (input, duration) = le_u16(input)?;
     let (input, destination_addr) = take(6usize)(input)?;
@@ -193,7 +193,7 @@ pub fn parse_beacon_frame(input: &[u8]) -> IResult<&[u8], WifiBeaconFrame> {
     ))
 }
 
-pub fn remove_radiotap_header(input: &[u8]) -> Option<&[u8]> {
+pub async fn remove_radiotap_header(input: &[u8]) -> Option<&[u8]> {
     let radiotap: Option<Radiotap> = match Radiotap::from_bytes(input) {
         Ok(radiotap) => Some(radiotap),
         Err(error) => {

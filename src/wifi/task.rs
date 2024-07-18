@@ -69,7 +69,7 @@ pub async fn start_wifi_task(
                 debug!("DroneBeacon found {:?}", data);
             }
 
-            let payload: Option<&[u8]> = remove_radiotap_header(data);
+            let payload: Option<&[u8]> = remove_radiotap_header(data).await;
 
             if payload.is_none() {
                 continue;
@@ -77,22 +77,22 @@ pub async fn start_wifi_task(
 
             let payload = payload.unwrap();
 
-            if is_beacon_frame(payload, 0) {
+            if is_beacon_frame(payload, 0).await {
                 trace!("Beacon frame found");
             }
 
-            if is_action_frame(payload, 0) {
+            if is_action_frame(payload, 0).await {
                 trace!("Action frame found");
             }
 
-            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload, 0)
+            let odid_message_pack: Option<WifiOpenDroneIDMessagePack> = if is_action_frame(payload, 0).await
             {
-                match parse_action_frame(payload) {
-                    Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body) {
+                match parse_action_frame(payload).await {
+                    Ok((_, frame)) => match parse_service_descriptor_attribute(frame.body).await {
                         Ok((_, service_descriptor_attribute)) => {
                             match parse_open_drone_id_message_pack(
                                 service_descriptor_attribute.service_info,
-                            ) {
+                            ).await {
                                 Ok((_, open_drone_id_message_pack)) => {
                                     Some(open_drone_id_message_pack)
                                 }
@@ -116,10 +116,10 @@ pub async fn start_wifi_task(
                         None
                     }
                 }
-            } else if is_beacon_frame(payload, 0) {
-                match parse_beacon_frame(payload) {
+            } else if is_beacon_frame(payload, 0).await {
+                match parse_beacon_frame(payload).await {
                     Ok((_, beacon_frame)) => {
-                        match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data) {
+                        match parse_open_drone_id_message_pack(beacon_frame.vendor_specific_data).await {
                             Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
                             Err(e) => {
                                 debug!("[beacon frame] Failed to parse Open Drone ID message pack: {:?}", e);
