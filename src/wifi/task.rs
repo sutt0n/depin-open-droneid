@@ -63,6 +63,8 @@ pub async fn start_wifi_task(
             .unwrap();
 
         while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
+            tokio::task::yield_now().await;
+
             let data = packet.data;
 
             if String::from_utf8_lossy(&data).contains("DroneBeacon") {
