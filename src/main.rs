@@ -15,6 +15,7 @@ use wifi::{start_wifi_task, WifiInterfaceBuilder};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    console_subscriber::init();
     // let bluetooth_device_name = "hci0";
     // let wifi_device_name = "wlx08beac26e3e8";
 

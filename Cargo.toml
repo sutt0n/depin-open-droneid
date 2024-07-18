@@ -21,7 +21,7 @@ pnet = "0.35.0"
 serde_json = "1.0.117"
 simple_wifi = "0.1.6"
 sqlx = { version = "0.7.4", features = ["chrono", "postgres", "runtime-tokio-native-tls"] }
-tokio = { version = "1.37.0", features = ["full"] }
+tokio = { version = "1.37.0", features = ["full", "tracing"] }
 tokio-stream = { version = "0.1.15", features = ["sync"] }
 tower-http = { version = "0.5.2", features = ["fs", "trace"] }
 packed_struct = { version = "0.10.1", features = ["use_serde"] }
@@ -32,3 +32,4 @@ derive_builder = "0.20.0"
 libwifi = "0.3.1"
 log = "0.4.22"
 env_logger = "0.11.3"
+console-subscriber = "0.3.0"
