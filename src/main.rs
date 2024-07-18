@@ -66,11 +66,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let wifi_interface = Arc::clone(&wifi_interface);
         async move {
             loop {
-                {
+                let should_change_channel = {
+                    let wifi_interface = wifi_interface.lock().await;
+                    wifi_interface.should_change_channel()
+                };
+
+                if should_change_channel {
                     let mut wifi_interface = wifi_interface.lock().await;
-                    if wifi_interface.should_change_channel() {
-                        wifi_interface.adjust_channel();
-                    }
+                    wifi_interface.adjust_channel();
                 }
 
                 tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
