@@ -151,8 +151,10 @@ pub async fn start_wifi_task(
 
             let current_timestamp: DateTime<Utc> = Utc::now();
 
-            let mut wifi_interface = wifi_interface.lock().await;
-            wifi_interface.update_last_odid_received(current_timestamp);
+            {
+                let mut wifi_interface = wifi_interface.lock().await;
+                wifi_interface.update_last_odid_received(current_timestamp);
+            }
 
             let mut drone: Drone = DroneBuilder::default().build().unwrap();
 
@@ -196,25 +198,27 @@ pub async fn start_wifi_task(
                 continue;
             };
 
-            let mut drones = drones.lock().await;
+            {
+                let mut drones = drones.lock().await;
 
-            if drones.contains_key(&drone_id) {
-                let drone = drones.get_mut(&drone_id).unwrap();
+                if drones.contains_key(&drone_id) {
+                    let drone = drones.get_mut(&drone_id).unwrap();
 
-                if let Some(last_location) = drone.last_location.clone() {
-                    drone.update_location(last_location);
-                }
+                    if let Some(last_location) = drone.last_location.clone() {
+                        drone.update_location(last_location);
+                    }
 
-                if let Some(system_message) = drone.system_message.clone() {
-                    drone.update_system_message(system_message);
-                }
+                    if let Some(system_message) = drone.system_message.clone() {
+                        drone.update_system_message(system_message);
+                    }
 
-                if let Some(operator) = drone.operator.clone() {
-                    drone.update_operator(operator);
-                }
+                    if let Some(operator) = drone.operator.clone() {
+                        drone.update_operator(operator);
+                    }
 
-                if let Some(basic_id) = drone.basic_id.clone() {
-                    drone.update_basic_id(basic_id);
+                    if let Some(basic_id) = drone.basic_id.clone() {
+                        drone.update_basic_id(basic_id);
+                    }
                 }
             }
 
@@ -223,28 +227,44 @@ pub async fn start_wifi_task(
 
                 println!("Drone ID: {}", drone_id);
 
-                drones.insert(drone_id, drone.clone());
+                {
+                    let mut drones = drones.lock().await;
+                    drones.insert(drone_id.clone(), drone.clone());
+                }
 
                 let drone_dto = DroneDto::from(drone.clone());
 
-                let db_pool = db_pool.lock().await;
-                let tx = tx.lock().await;
+                let (db_pool, tx) = {
+                    let db_pool = db_pool.lock().await.clone();
+                    let tx = tx.lock().await.clone();
+                    (db_pool, tx)
+                };
 
                 println!("Inserting drone into database");
 
                 let drone_dto = insert_drone(drone_dto, &db_pool, &tx).await;
 
-                drone.set_in_db(true, drone_dto.id);
+                let mut drones = drones.lock().await;
+                if let Some(mut drone) = drones.get_mut(&drone_id) {
+                    drone.set_in_db(true, drone_dto.id);
+                }
             } else if drone.payload_ready() && drone.is_in_db {
                 let drone_dto = DroneDto::from(drone.clone());
 
-                let db_pool = db_pool.lock().await;
-                let tx = tx.lock().await;
+                let (db_pool, tx) = {
+                    let db_pool = db_pool.lock().await.clone();
+                    let tx = tx.lock().await.clone();
+                    (db_pool, tx)
+                };
 
                 update_drone(drone_dto, &db_pool, &tx).await;
             } else {
+                let mut drones = drones.lock().await;
                 drones.insert(drone_id, drone);
             }
+
+            // Yield control to allow other tasks to run
+            tokio::task::yield_now().await;
         }
     })
 }
