@@ -72,6 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
 
                 tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+                drop(wifi_interface);
             }
         }
     });
