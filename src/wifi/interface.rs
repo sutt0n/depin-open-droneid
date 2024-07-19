@@ -51,7 +51,8 @@ impl WifiInterface {
             11 => self.channel = 12,
             12 => self.channel = 13,
             13 => self.channel = 14,
-            14 => self.channel = 1,
+            14 => self.channel = 149,
+            149 => self.channel = 1,
             _ => self.channel = 6,
         }
 
