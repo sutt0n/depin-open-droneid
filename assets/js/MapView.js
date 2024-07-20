@@ -149,7 +149,7 @@ export default defineComponent({
         `,
   setup() {
     // default position is Jonesboro, AR
-    const center = ref({ lat: 35.8357, lng: -90.7051 });
+    const center = ref({ lat: 33.070340, lng: -97.038090 });
     // load your current location (asks for permission)
     const setLocationAsCenter = () => {
       navigator.geolocation.getCurrentPosition((pos) => {
