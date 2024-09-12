@@ -1,0 +1,11 @@
+
+app:
+  wifi:
+    device_name: iw0
+    channels:
+      - 1
+      - 6
+      - 11
+    channel_mod_freq_ms: 100
+  bluetooth:
+    device_name: hw0
