@@ -2,13 +2,13 @@ use std::net::SocketAddr;
 
 use axum::Router;
 
-pub async fn start_webserver(router: Router) {
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+use super::WebConfig;
 
-    println!("About to serve axum");
+pub async fn start_webserver(config: WebConfig, router: Router) -> anyhow::Result<()> {
+    let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
 
     let _ = axum::serve(listener, router).await.unwrap();
 
-    println!("Server running on 3001");
+    Ok(())
 }

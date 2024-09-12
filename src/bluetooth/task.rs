@@ -23,53 +23,54 @@ pub async fn start_bluetooth_task(
     drones: Arc<Mutex<HashMap<String, Drone>>>,
     db_pool: Arc<Mutex<Pool<Postgres>>>,
     tx: Arc<Mutex<Sender<DroneUpdate>>>,
-) -> JoinHandle<()> {
-    println!("Starting Bluetooth task.");
-    tokio::spawn(async move {
-        println!("Inside async move for BT");
+) -> anyhow::Result<()> {
+    println!("Inside async move for BT");
 
-        let (_, session) = BluetoothSession::new().await.unwrap();
-        let mut events = session.event_stream().await.unwrap();
-        session
-            .start_discovery_with_filter(&DiscoveryFilter {
-                duplicate_data: Some(true),
-                ..DiscoveryFilter::default()
-            })
-            .await
-            .unwrap();
+    let (_, session) = BluetoothSession::new().await.unwrap();
+    let mut events = session.event_stream().await.unwrap();
+    session
+        .start_discovery_with_filter(&DiscoveryFilter {
+            duplicate_data: Some(true),
+            ..DiscoveryFilter::default()
+        })
+        .await
+        .unwrap();
 
-        println!("Scanning for Bluetooth advertisement data.");
+    println!("Scanning for Bluetooth advertisement data.");
 
-        while let Some(event) = events.next().await {
-            println!("events!");
-            let mut drones = drones.lock().await;
-            if let Some((device_id, message_type)) =
-                handle_bluetooth_event(&mut drones, device_name.as_str(), event).await
-            {
-                let device_id = device_id.to_string();
-                let drone = drones.get_mut(&device_id);
+    while let Some(event) = events.next().await {
+        println!("events!");
+        let mut drones = drones.lock().await;
+        if let Some((device_id, message_type)) =
+            handle_bluetooth_event(&mut drones, device_name.as_str(), event).await
+        {
+            let device_id = device_id.to_string();
+            let drone = drones.get_mut(&device_id);
 
-                if drone.is_some() {
-                    let drone = drone.unwrap();
-                    if drone.payload_ready() {
-                        let drone_dto = DroneDto::from(drone.clone());
+            if drone.is_some() {
+                let drone = drone.unwrap();
+                if drone.payload_ready() {
+                    let drone_dto = DroneDto::from(drone.clone());
 
-                        let db_pool = db_pool.lock().await;
-                        let tx = tx.lock().await;
+                    let db_pool = db_pool.lock().await;
+                    let tx = tx.lock().await;
 
-                        if !drone.is_in_db {
-                            let inserted_drone = insert_drone(drone_dto, &db_pool, &tx).await;
-                            drone.set_in_db(true, inserted_drone.id);
-                        } else {
-                            if message_type == 2 || message_type == 4 {
-                                insert_drone(drone_dto, &db_pool, &tx).await;
-                            }
+                    if !drone.is_in_db {
+                        let inserted_drone = insert_drone(drone_dto, &db_pool, &tx).await;
+                        drone.set_in_db(true, inserted_drone.id);
+                    } else {
+                        #[allow(clippy::collapsible_else_if)]
+                        // keeping this so we don't have to fight the borrow checker
+                        if message_type == 2 || message_type == 4 {
+                            insert_drone(drone_dto, &db_pool, &tx).await;
                         }
                     }
                 }
             }
         }
-    })
+    }
+
+    Ok(())
 }
 
 pub async fn handle_bluetooth_event(
@@ -146,77 +147,6 @@ pub async fn handle_bluetooth_event(
                             }
                         }
                     }
-
-                    // match data[0] {
-                    //     0x0D => {
-                    //         // skip first two bytes
-                    //         let data = &data[2..];
-                    //
-                    //         let header = data[0];
-                    //         // message type is 4 bits, protocol version is last 4 bits
-                    //         let message_type = (header & 0xF0) >> 4;
-                    //         let _protocol_version = header & 0x0F;
-                    //
-                    //         let data = &data[1..];
-                    //
-                    //         match message_type {
-                    //             0 => {
-                    //                 println!("Basic ID {:?}", clone_data);
-                    //                 if let Ok((_, basic_id)) = parse_basic_id(data) {
-                    //                     drones
-                    //                         .get_mut(&id)
-                    //                         .unwrap()
-                    //                         .update_basic_id(basic_id);
-                    //                 }
-                    //             }
-                    //             1 => {
-                    //                 println!("Location {:?}", clone_data);
-                    //                 if let Ok((_, location)) = parse_location(data) {
-                    //                     drones
-                    //                         .get_mut(&id)
-                    //                         .unwrap()
-                    //                         .update_location(location);
-                    //                 }
-                    //             }
-                    //             3 => {
-                    //                 println!("Self ID {:?}", clone_data);
-                    //                 println!("Self ID message");
-                    //             }
-                    //             2 => {
-                    //                 println!("Self ID {:?}", clone_data);
-                    //                 println!("Auth message");
-                    //             }
-                    //             4 => {
-                    //                 println!("System Message {:?}", clone_data);
-                    //                 if let Ok((_, system_message)) = parse_system_message(data) {
-                    //                     drones
-                    //                         .get_mut(&id)
-                    //                         .unwrap()
-                    //                         .update_system_message(system_message);
-                    //
-                    //                 }
-                    //             }
-                    //             5 => {
-                    //                 println!("Operator ID {:?}", clone_data);
-                    //                 if let Ok((_, operator)) = parse_operator_id(data) {
-                    //                     drones
-                    //                         .get_mut(&id)
-                    //                         .unwrap()
-                    //                         .update_operator(operator);
-                    //                 }
-                    //             }
-                    //             0xF => {
-                    //                 println!("Message Pack");
-                    //             }
-                    //             message => {
-                    //                 println!("Unknown message type {}", message);
-                    //             }
-                    //         }
-                    //
-                    //         return Some((id, message_type));
-                    //     }
-                    //     _ => {}
-                    // }
 
                     Some((id, 69))
                 }

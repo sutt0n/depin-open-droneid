@@ -1,22 +1,52 @@
 use std::process::Command;
 
 use chrono::{DateTime, Utc};
-use derive_builder::Builder;
-use log::{trace, debug};
+use log::{debug, trace};
 
-#[derive(Debug, Builder, Clone)]
+use super::WifiConfig;
+
+#[derive(Debug, Clone)]
 pub struct WifiInterface {
-    #[builder(default = "String::from(\"wlan0\")")]
     pub name: String,
-    #[builder(default = "6")]
-    pub channel: u8,
-    #[builder(default = "None")]
+    pub channel: u64,
     pub last_odid_received: Option<DateTime<Utc>>,
+}
+
+impl Default for WifiInterface {
+    fn default() -> Self {
+        WifiInterface {
+            name: "wlan0".to_string(),
+            channel: 6,
+            last_odid_received: None,
+        }
+    }
 }
 
 impl WifiInterface {
     // Time in seconds to change the channel
     const TIME_TO_CHANGE_CHANNEL: i64 = 30;
+
+    pub async fn init(config: WifiConfig) -> anyhow::Result<Self> {
+        let wifi_interface = WifiInterface {
+            name: config.device_name,
+            channel: config.channels[0],
+            last_odid_received: None,
+        };
+
+        // Enable monitoring mode
+        enable_monitor_mode(wifi_interface.name.as_str()).unwrap();
+
+        Ok(wifi_interface)
+    }
+
+    pub async fn run(&mut self) -> anyhow::Result<()> {
+        loop {
+            // Check if the channel should be changed
+            if self.should_change_channel() {
+                self.adjust_channel();
+            }
+        }
+    }
 
     pub fn update_last_odid_received(&mut self, timestamp: DateTime<Utc>) {
         self.last_odid_received = Some(timestamp);
