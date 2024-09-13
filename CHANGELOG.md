@@ -1,4 +1,4 @@
-## [unreleased]
+## [0.1.0-2ef286c] - 2024-09-13
 
 ### Chore
 
@@ -36,7 +36,6 @@
 
 ### Feat
 
-- Init
 - Ensure monitor mode
 - Cleanup
 - Implement spec
