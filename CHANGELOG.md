@@ -1,4 +1,4 @@
-## [unreleased]
+## [<tagname>] - 2024-09-13
 
 ### Chore
 
@@ -31,7 +31,6 @@
 
 ### Feat
 
-- Init
 - Ensure monitor mode
 - Cleanup
 - Implement spec
