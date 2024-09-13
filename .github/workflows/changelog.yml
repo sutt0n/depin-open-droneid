@@ -52,17 +52,10 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Create a GitHub release
-        uses: ncipollo/release-action@v1
-        with:
-          tag: ${{ steps.tag_version.outputs.new_tag }}
-          name: Release ${{ steps.tag_version.outputs.new_tag }}
-          body: ${{ steps.tag_version.outputs.changelog }}
+      - name: Push the new tag to the main branch
+        run: |
+          git tag ${{ steps.tag_version.outputs.new_tag }}  # Create the tag locally
+          git push origin ${{ steps.tag_version.outputs.new_tag }}  # Push the tag to the main branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
-      # - name: Push the new tag to the main branch
-      #   run: |
-      #     git tag ${{ steps.tag_version.outputs.new_tag }}  # Create the tag locally
-      #     git push origin ${{ steps.tag_version.outputs.new_tag }}  # Push the tag to the main branch
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
-      #
