@@ -106,7 +106,7 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
     //    );
     //}));
 
-    println!("Starting miner");
+    println!("Starting miner to submit random payloads");
     let miner_send = send.clone();
     handles.push(tokio::spawn(async move {
         let _ = miner_send.try_send(
@@ -115,18 +115,6 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
                 .context("miner task error"),
         );
     }));
-
-    //println!("Starting MQTT client");
-    //let mqtt_send = send.clone();
-    //let mqtt_app = Arc::clone(&ts_app);
-    //handles.push(tokio::spawn(async move {
-    //    let _ = mqtt_send.try_send(
-    //        mqtt_app
-    //            .run_eventloop()
-    //            .await
-    //            .context("mqtt client task error"),
-    //    );
-    //}));
 
     println!("Starting Web server");
     let web_send = send.clone();

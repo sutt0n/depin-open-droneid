@@ -32,12 +32,6 @@ impl TrebuchetApp {
         })
     }
 
-    pub async fn run_eventloop(&self) -> anyhow::Result<(), ApplicationError> {
-        self.mqtt_client.run_eventloop().await?;
-
-        Ok(())
-    }
-
     pub async fn send_payload(&self, payload: Vec<u8>) -> anyhow::Result<(), ApplicationError> {
         let _ = self.mqtt_client.publish(payload).await?;
 

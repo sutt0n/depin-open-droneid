@@ -69,22 +69,4 @@ impl MqttClient {
 
         Ok(())
     }
-
-    pub async fn run_eventloop(&self) -> anyhow::Result<(), MqttClientError> {
-        let (_, mut eventloop) = AsyncClient::new(self.options.clone(), 10);
-
-        tokio::spawn(async move {
-            loop {
-                match eventloop.poll().await {
-                    Ok(notification) => println!("Received: {:?}", notification),
-                    Err(e) => {
-                        println!("Error: {:?}", e);
-                        break;
-                    }
-                }
-            }
-        });
-
-        Ok(())
-    }
 }
