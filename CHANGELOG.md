@@ -18,6 +18,7 @@
 
 - Changelog
 - Fix
+- Release
 
 ### Debug
 
