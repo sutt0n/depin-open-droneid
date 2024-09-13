@@ -21,6 +21,8 @@ jobs:
           title: $version
           branch: 'main|v[0-9]+'
           token: ${{ secrets.GH_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
   upload-assets:
     needs: create-release
