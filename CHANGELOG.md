@@ -1,4 +1,4 @@
-## [<tagname>] - 2024-09-13
+## [unreleased]
 
 ### Chore
 
@@ -13,6 +13,11 @@
 - Remove pcap stuff
 - Remove log file
 - Remove log file
+- Tag
+- Tag
+- Tag
+- Tag
+- Tag
 - Tag
 
 ### Ci
@@ -31,6 +36,7 @@
 
 ### Feat
 
+- Init
 - Ensure monitor mode
 - Cleanup
 - Implement spec
@@ -49,6 +55,7 @@
 - Don't panic when radiotap fails
 - Increase message pack check
 - Decrease interval and channels
+- Ci
 - Ci
 
 ### Refactor
