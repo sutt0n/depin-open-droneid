@@ -8,6 +8,6 @@ pub enum ApplicationError {
     //WifiError(#[from] crate::broker::BrokerError),
     //#[error("{0}")]
     //DroneError(#[from] crate::broker::BrokerError),
-    //#[error("{0}")]
-    //PublishError(#[from] crate::publish::PublishError),
+    #[error("{0}")]
+    MqttClientError(#[from] crate::mqtt_client::error::MqttClientError),
 }

@@ -1,6 +1,8 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{bluetooth::BluetoothConfig, web::WebConfig, wifi::WifiConfig};
+use crate::{
+    bluetooth::BluetoothConfig, mqtt_client::MqttClientConfig, web::WebConfig, wifi::WifiConfig,
+};
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AppConfig {
@@ -10,4 +12,6 @@ pub struct AppConfig {
     pub wifi: WifiConfig,
     #[serde(default)]
     pub web: WebConfig,
+    #[serde(default)]
+    pub mqtt: MqttClientConfig,
 }
