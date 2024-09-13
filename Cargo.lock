@@ -3278,6 +3278,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "serde_yaml",
+ "sha2",
  "simple_wifi",
  "sqlx",
  "thiserror",
