@@ -16,6 +16,8 @@ jobs:
           changelog: CHANGELOG.md
           # (required) GitHub token for creating GitHub Releases.
           token: ${{ secrets.GH_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
   upload-assets:
     needs: create-release
@@ -40,3 +42,5 @@ jobs:
           tar: all
           zip: windows
           token: ${{ secrets.GH_TOKEN }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
