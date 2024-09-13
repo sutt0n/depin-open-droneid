@@ -1,10 +1,6 @@
-## [0.0.1] - 2024-09-13
+## [0.0.2] - 2024-09-13
 
-### Fix
+### Ci
 
-- Tag
-- Tag
-- Tag
-- Tag
-- Tag
+- Release version
 
