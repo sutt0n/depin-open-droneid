@@ -49,6 +49,7 @@
 - Don't panic when radiotap fails
 - Increase message pack check
 - Decrease interval and channels
+- Ci
 
 ### Refactor
 
