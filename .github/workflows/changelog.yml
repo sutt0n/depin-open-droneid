@@ -36,13 +36,13 @@ jobs:
           git commit -m "Update changelog"
           git push https://${{ secrets.GH_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git main
 
-      - name: Create tag
-        uses: actions/github-script@v5
+
+  tag:
+    name: Tag release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Bump version and push tag
+        uses: hennejg/github-tag-action@v4.1.jh1
         with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/<tagname>',
-              sha: context.sha
-            })
+          github_token: ${{ secrets.GITHUB_TOKEN }}
