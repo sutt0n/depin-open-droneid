@@ -54,8 +54,11 @@ jobs:
 
       - name: Push the new tag to the main branch
         run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          set +e
           git tag ${{ steps.tag_version.outputs.new_tag }}  # Create the tag locally
-          git push origin ${{ steps.tag_version.outputs.new_tag }}  # Push the tag to the main branch
+          git push https://${{ secrets.GH_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git ${{ steps.tag_version.outputs.new_tag }}  # Push the tag to the main branch
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
 
