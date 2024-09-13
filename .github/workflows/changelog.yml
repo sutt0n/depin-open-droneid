@@ -35,3 +35,14 @@ jobs:
           git add CHANGELOG.md
           git commit -m "Update changelog"
           git push https://${{ secrets.GH_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git main
+
+      - name: Create tag
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/<tagname>',
+              sha: context.sha
+            })
