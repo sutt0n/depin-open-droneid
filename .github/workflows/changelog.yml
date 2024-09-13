@@ -38,6 +38,7 @@ jobs:
 
 
   tag:
+    needs: changelog
     name: Tag release
     runs-on: ubuntu-latest
     steps:
