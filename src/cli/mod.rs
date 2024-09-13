@@ -46,6 +46,7 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
 
     let (router, drone_update_tx) = init_router(pool.clone());
 
+    let ts_app = Arc::new(app.clone());
     let ts_pool = Arc::new(Mutex::new(pool.clone()));
     let ts_drone_update = Arc::new(Mutex::new(drone_update_tx.clone()));
 
@@ -105,6 +106,28 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
     //    );
     //}));
 
+    println!("Starting miner");
+    let miner_send = send.clone();
+    handles.push(tokio::spawn(async move {
+        let _ = miner_send.try_send(
+            crate::miner::start_miner_task(app.clone())
+                .await
+                .context("miner task error"),
+        );
+    }));
+
+    //println!("Starting MQTT client");
+    //let mqtt_send = send.clone();
+    //let mqtt_app = Arc::clone(&ts_app);
+    //handles.push(tokio::spawn(async move {
+    //    let _ = mqtt_send.try_send(
+    //        mqtt_app
+    //            .run_eventloop()
+    //            .await
+    //            .context("mqtt client task error"),
+    //    );
+    //}));
+
     println!("Starting Web server");
     let web_send = send.clone();
     let web_config = config.app.web;
@@ -118,6 +141,7 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
 
     let reason = receive.recv().await.expect("Didn't receive msg");
     for handle in handles {
+        println!("Cancelling task");
         handle.abort();
     }
 

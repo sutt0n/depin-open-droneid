@@ -1,4 +1,13 @@
 use ::chrono::{DateTime, Utc};
+use fake::faker::address::en::{Latitude, Longitude};
+use fake::faker::boolean::en::*;
+use fake::faker::company::en::*;
+use fake::faker::company::raw::CompanyName;
+use fake::faker::lorem::en::*;
+use fake::faker::name::en::*;
+use fake::faker::number::en::*;
+use fake::locales::EN;
+use fake::{Dummy, Fake, Faker};
 use serde::{Deserialize, Serialize};
 
 use crate::drone::Drone;
@@ -16,7 +25,7 @@ pub struct DroneUpdate {
     pub id: i32,
 }
 
-#[derive(Debug, Clone, sqlx::FromRow, Serialize, Deserialize)]
+#[derive(Debug, Dummy, Clone, sqlx::FromRow, Serialize, Deserialize)]
 pub struct DroneDto {
     pub id: i32,
     pub serial_number: String,
@@ -31,6 +40,40 @@ pub struct DroneDto {
     pub pilot_longitude: f64,
     pub home_latitude: f64,
     pub home_longitude: f64,
+}
+
+impl DroneDto {
+    pub fn dummy() -> Self {
+        let id = Faker.fake::<i32>();
+        let serial_number = CompanyName(EN).fake();
+        let created = Faker.fake::<DateTime<Utc>>();
+        let latitude: f64 = Latitude().fake();
+        let longitude: f64 = Longitude().fake();
+        let altitude = Faker.fake::<f64>() as f64;
+        let x_speed = Faker.fake::<f64>() as f64;
+        let y_speed = Faker.fake::<f64>() as f64;
+        let yaw = Faker.fake::<f64>() as f64;
+        let pilot_latitude: f64 = Latitude().fake();
+        let pilot_longitude: f64 = Longitude().fake();
+        let home_latitude: f64 = Latitude().fake();
+        let home_longitude: f64 = Longitude().fake();
+
+        DroneDto {
+            id,
+            serial_number,
+            created,
+            latitude,
+            longitude,
+            altitude,
+            x_speed,
+            y_speed,
+            yaw,
+            pilot_latitude,
+            pilot_longitude,
+            home_latitude,
+            home_longitude,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

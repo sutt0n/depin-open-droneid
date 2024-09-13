@@ -9,3 +9,11 @@ app:
     channel_mod_freq_ms: 100
   bluetooth:
     device_name: hw0
+  mqtt:
+    uri: localhost
+    port: 8883
+    keep_alive: 5
+    topic: skypal/drone
+    ca_cert: ./dev/certs/ca.crt
+    client_cert: ./dev/certs/client.crt
+    client_key: ./dev/certs/client.key
