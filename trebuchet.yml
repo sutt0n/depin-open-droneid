@@ -10,12 +10,12 @@ app:
   bluetooth:
     device_name: hw0
   mqtt:
-    uri: localhost
+    uri: 192.168.1.79
     port: 8883
     keep_alive: 5
     topic: skypal/drone
-    ca_cert: ./dev/certs/ca.crt
-    client_cert: ./dev/certs/client.crt
-    client_key: ./dev/certs/client.key
+    ca_cert: ./certs/ca.crt
+    client_cert: ./certs/client.crt
+    client_key: ./certs/client.key
   miner:
     wallet_address: HShLUQnxQkcT2rZNxUAJdVeBBwSF6T7JT5XD1dUShKR6
