@@ -3,7 +3,7 @@ pub mod config;
 use crate::{app::TrebuchetApp, web::DroneDto};
 use mac_address::get_mac_address;
 use rand::Rng;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use uuid::{uuid, Uuid};
 
@@ -15,7 +15,7 @@ const EARTH_RADIUS_KM: f64 = 6371.0;
 
 const NAMESPACE_UUID: Uuid = uuid!("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Machine {
     pub id: String,
     pub latitude: f64,
@@ -23,7 +23,7 @@ pub struct Machine {
     pub wallet_address: String,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MqttPayload {
     pub machine: Machine,
     pub drone: DroneDto,
