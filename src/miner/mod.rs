@@ -25,8 +25,8 @@ pub struct MachinePayload {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MqttPayload {
-    pub machine: MachinePayload,
     pub drone: DroneDto,
+    pub machine: MachinePayload,
 }
 
 pub async fn start_miner_task(app: TrebuchetApp, config: MinerConfig) -> anyhow::Result<()> {
