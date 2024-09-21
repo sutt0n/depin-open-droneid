@@ -17,3 +17,5 @@ app:
     ca_cert: ./dev/certs/ca.crt
     client_cert: ./dev/certs/client.crt
     client_key: ./dev/certs/client.key
+  miner:
+    wallet_address: HShLUQnxQkcT2rZNxUAJdVeBBwSF6T7JT5XD1dUShKR6
