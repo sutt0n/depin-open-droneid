@@ -121,5 +121,5 @@ fn should_send_payload() -> bool {
     let result = result.as_slice();
 
     // contains 00 at the start
-    result[0] == 0 && result[1] == 0 && result[2] == 0
+    result[0] == 0 && result[1] == 0
 }
