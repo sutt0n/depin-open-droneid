@@ -40,8 +40,8 @@ pub async fn start_miner_task(app: TrebuchetApp, config: MinerConfig) -> anyhow:
             let (lat, lon) = generate_random_point(drone.latitude, drone.longitude, 5.0);
             let machine = Machine {
                 id: generate_uuid_v5_from_mac(&get_mac_as_string().unwrap()).to_string(),
-                latitude: drone.latitude,
-                longtitude: drone.longitude,
+                latitude: lat,
+                longtitude: lon,
                 wallet_address: config.wallet_address.clone(),
             };
             let payload = MqttPayload { machine, drone };
