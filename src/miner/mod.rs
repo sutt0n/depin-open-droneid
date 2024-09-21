@@ -16,7 +16,7 @@ const EARTH_RADIUS_KM: f64 = 6371.0;
 const NAMESPACE_UUID: Uuid = uuid!("6ba7b810-9dad-11d1-80b4-00c04fd430c8");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Machine {
+pub struct MachinePayload {
     pub id: String,
     pub latitude: f64,
     pub longtitude: f64,
@@ -25,7 +25,7 @@ pub struct Machine {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MqttPayload {
-    pub machine: Machine,
+    pub machine: MachinePayload,
     pub drone: DroneDto,
 }
 
@@ -38,7 +38,7 @@ pub async fn start_miner_task(app: TrebuchetApp, config: MinerConfig) -> anyhow:
 
             let drone = DroneDto::dummy();
             let (lat, lon) = generate_random_point(drone.latitude, drone.longitude, 5.0);
-            let machine = Machine {
+            let machine = MachinePayload {
                 id: generate_uuid_v5_from_mac(&get_mac_as_string().unwrap()).to_string(),
                 latitude: lat,
                 longtitude: lon,
