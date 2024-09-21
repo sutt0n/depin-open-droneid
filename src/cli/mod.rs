@@ -110,7 +110,7 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
     let miner_send = send.clone();
     handles.push(tokio::spawn(async move {
         let _ = miner_send.try_send(
-            crate::miner::start_miner_task(app.clone())
+            crate::miner::start_miner_task(app.clone(), config.app.miner)
                 .await
                 .context("miner task error"),
         );
