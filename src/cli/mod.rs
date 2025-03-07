@@ -106,7 +106,7 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
     //    );
     //}));
 
-    println!("Starting miner to submit random payloads");
+    println!("Starting miner to submit random payloads for testing purposes.");
     let miner_send = send.clone();
     handles.push(tokio::spawn(async move {
         let _ = miner_send.try_send(
