@@ -19,3 +19,7 @@ If you have a Bluetooth module, it scans for announcement packets over those cha
 ## Does it "Track"?
 
 Yes. Once a packet payload is found, it keeps the WiFi module on that specific channel. Now, you'd technically need _many_ modules for this to work efficiently; however, this miner works with just one. It can be easily modified to cater to multiple WiFi modules. 
+
+## How do I know?
+
+You can run this miner, and it _also_ runs a webserver on port `8080` that serves a map. You'll need to use your own Google Maps API key, however. 😉
