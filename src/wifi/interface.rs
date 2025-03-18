@@ -41,6 +41,8 @@ impl WifiInterface {
 
     pub async fn run(&mut self) -> anyhow::Result<()> {
         loop {
+            // sleep for 5 seconds
+            tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
             // Check if the channel should be changed
             if self.should_change_channel() {
                 self.adjust_channel();
