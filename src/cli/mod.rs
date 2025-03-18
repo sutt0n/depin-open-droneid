@@ -69,42 +69,42 @@ async fn run_cmd(config: Config) -> anyhow::Result<()> {
     //}));
 
     println!("Starting WiFi interface modulator");
-    //let wifi_interface_send = send.clone();
-    //let wifi_interface = WifiInterface::init(config.app.wifi.clone()).await?;
-    //let wifi_interface = Arc::new(Mutex::new(wifi_interface.clone()));
-    //handles.push(tokio::spawn({
-    //    let wifi_interface = Arc::clone(&wifi_interface);
-    //    async move {
-    //        let _ = wifi_interface_send.try_send(
-    //            wifi_interface
-    //                .lock()
-    //                .await
-    //                .run()
-    //                .await
-    //                .context("wifi interface task error"),
-    //        );
-    //    }
-    //}));
+    let wifi_interface_send = send.clone();
+    let wifi_interface = WifiInterface::init(config.app.wifi.clone()).await?;
+    let wifi_interface = Arc::new(Mutex::new(wifi_interface.clone()));
+    handles.push(tokio::spawn({
+        let wifi_interface = Arc::clone(&wifi_interface);
+        async move {
+            let _ = wifi_interface_send.try_send(
+                wifi_interface
+                    .lock()
+                    .await
+                    .run()
+                    .await
+                    .context("wifi interface task error"),
+            );
+        }
+    }));
 
     println!("Starting WiFi listener");
-    //let wifi_send = send.clone();
-    //let wifi_pool = Arc::clone(&ts_pool);
-    //let wifi_drone_update = Arc::clone(&ts_drone_update);
-    //let wifi_drones = Arc::clone(&app.drones);
-    //let wifi_interface = Arc::clone(&wifi_interface);
-    //handles.push(tokio::spawn(async move {
-    //    let _ = wifi_send.try_send(
-    //        crate::wifi::start_wifi_task(
-    //            config.app.wifi.device_name.clone(),
-    //            wifi_pool,
-    //            wifi_drones,
-    //            wifi_drone_update,
-    //            wifi_interface,
-    //        )
-    //        .await
-    //        .context("wifi task error"),
-    //    );
-    //}));
+    let wifi_send = send.clone();
+    let wifi_pool = Arc::clone(&ts_pool);
+    let wifi_drone_update = Arc::clone(&ts_drone_update);
+    let wifi_drones = Arc::clone(&app.drones);
+    let wifi_interface = Arc::clone(&wifi_interface);
+    handles.push(tokio::spawn(async move {
+        let _ = wifi_send.try_send(
+            crate::wifi::start_wifi_task(
+                config.app.wifi.device_name.clone(),
+                wifi_pool,
+                wifi_drones,
+                wifi_drone_update,
+                wifi_interface,
+            )
+            .await
+            .context("wifi task error"),
+        );
+    }));
 
     println!("Starting miner to submit random payloads for testing purposes.");
     let miner_send = send.clone();
