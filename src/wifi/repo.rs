@@ -12,7 +12,9 @@ use super::{
     WifiServiceDescriptorAttribute as ServiceDescriptorAttribute,
 };
 
-pub async fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], OpenDroneIDMessagePack> {
+pub async fn parse_open_drone_id_message_pack(
+    input: &[u8],
+) -> IResult<&[u8], OpenDroneIDMessagePack> {
     let (input, message_type_and_version_pack) = le_u8(input)?;
     let message_pack_type = message_type_and_version_pack >> 4;
     let version_pack = message_type_and_version_pack & 0x0F;
@@ -39,6 +41,8 @@ pub async fn parse_open_drone_id_message_pack(input: &[u8]) -> IResult<&[u8], Op
 
         input = new_input;
     }
+
+    println!("Parsed {} messages", messages.len());
 
     Ok((
         input,
