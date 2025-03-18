@@ -62,7 +62,13 @@ impl WifiInterface {
                     .num_seconds();
                 time_diff > WifiInterface::TIME_TO_CHANGE_CHANNEL
             }
-            None => true,
+            None => {
+                let time_diff = current_time.signed_duration_since(
+                    Utc::now() - chrono::Duration::seconds(WifiInterface::TIME_TO_CHANGE_CHANNEL),
+                );
+
+                time_diff.num_seconds() > 5
+            }
         }
     }
 
