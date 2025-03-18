@@ -71,16 +71,8 @@ impl WifiInterface {
             // 2.4 GHz channels
             1 => self.channel = 6,
             6 => self.channel = 11,
-            11 => self.channel = 36,
+            11 => self.channel = 1,
             // 5 GHz channels
-            36 => self.channel = 40,
-            40 => self.channel = 44,
-            44 => self.channel = 48,
-            48 => self.channel = 149,
-            149 => self.channel = 153,
-            153 => self.channel = 157,
-            157 => self.channel = 161,
-            161 => self.channel = 1,
             _ => self.channel = 6,
         }
 

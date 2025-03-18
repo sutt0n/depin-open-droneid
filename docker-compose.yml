@@ -6,8 +6,16 @@ services:
     ports:
       - "5434:5432"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: db
-    # volumes:
-    #   - ./docker_postgres_init.sql:/docker-entrypoint-initdb.d/docker_postgres_init.sql
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=pg
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - trebuchetdata:/var/lib/postgresql/data
+
+volumes:
+  trebuchetdata:
