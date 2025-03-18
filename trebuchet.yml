@@ -1,7 +1,7 @@
 
 app:
   wifi:
-    device_name: iw0
+    device_name: wlx08beac26e3e8
     channels:
       - 1
       - 6
