@@ -18,11 +18,27 @@ pub async fn parse_open_drone_id_message_pack(
     input: &[u8],
 ) -> IResult<&[u8], OpenDroneIDMessagePack> {
     let (input, message_type_and_version_pack) = le_u8(input)?;
+
+    debug!(
+        "Parsed message type and version pack: {}",
+        message_type_and_version_pack
+    );
+
     let message_pack_type = message_type_and_version_pack >> 4;
     let version_pack = message_type_and_version_pack & 0x0F;
 
+    debug!(
+        "Parsed message pack type: {}, version: {}",
+        message_pack_type, version_pack
+    );
+
     let (input, single_msg_size) = le_u8(input)?;
+
+    debug!("Parsed single message size: {}", single_msg_size);
+
     let (mut input, num_messages) = le_u8(input)?;
+
+    debug!("Parsed number of messages: {}", num_messages);
 
     let mut messages = Vec::new();
 
