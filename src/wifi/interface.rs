@@ -88,7 +88,8 @@ impl WifiInterface {
         match self.channel {
             // 2.4 GHz channels
             1 => self.channel = 6,
-            6 => self.channel = 11,
+            6 => self.channel = 9,
+            9 => self.channel = 11,
             11 => self.channel = 1,
             // 5 GHz channels
             _ => self.channel = 6,
