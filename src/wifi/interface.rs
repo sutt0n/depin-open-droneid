@@ -66,6 +66,12 @@ impl WifiInterface {
                 let time_diff = current_time
                     .signed_duration_since(last_odid_received)
                     .num_seconds();
+
+                debug!(
+                    "Tracking on channel {} for {} seconds",
+                    self.channel, time_diff
+                );
+
                 time_diff > WifiInterface::TIME_TO_CHANGE_CHANNEL
             }
             None => {
