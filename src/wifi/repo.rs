@@ -17,15 +17,12 @@ use super::{
 pub async fn parse_open_drone_id_message_pack(
     input: &[u8],
 ) -> IResult<&[u8], OpenDroneIDMessagePack> {
-    let (input, message_type_and_version_pack) = le_u8::<&[u8], VerboseError<&[u8]>>(input)
-        .expect("Failed to read message type and version pack");
+    let (input, message_type_and_version_pack) = le_u8(input)?;
     let message_pack_type = message_type_and_version_pack >> 4;
     let version_pack = message_type_and_version_pack & 0x0F;
 
-    let (input, single_msg_size) =
-        le_u8::<&[u8], VerboseError<&[u8]>>(input).expect("Failed to read single message size");
-    let (mut input, num_messages) =
-        le_u8::<&[u8], VerboseError<&[u8]>>(input).expect("Failed to read number of messages");
+    let (input, single_msg_size) = le_u8(input)?;
+    let (mut input, num_messages) = le_u8(input)?;
 
     let mut messages = Vec::new();
 
@@ -34,16 +31,23 @@ pub async fn parse_open_drone_id_message_pack(
         message_pack_type, version_pack, single_msg_size
     );
 
-    for i in 1..=num_messages {
+    for _ in 1..=num_messages {
         let new_input = input;
 
-        let (new_input, message_type_and_version) = le_u8::<&[u8], VerboseError<&[u8]>>(new_input)
-            .expect(format!("Failed to read message type and version for message {}", i).as_str());
+        let (new_input, message_type_and_version) = le_u8(new_input)?;
+
+        debug!(
+            "Parsed message type: {}, version: {}",
+            message_type_and_version >> 4,
+            message_type_and_version & 0x0F
+        );
+
         let message_type = message_type_and_version >> 4;
         let version = message_type_and_version & 0x0F;
 
-        let (new_input, message_body) =
-            context("Parsing 24 bytes for message body", take(24usize))(new_input)?;
+        let (new_input, message_body) = take(24usize)(new_input)?;
+
+        debug!("Parsed message body: {:?}", message_body);
 
         messages.push(OpenDroneIDMessage {
             message_type,
