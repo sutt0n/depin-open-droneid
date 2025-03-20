@@ -64,7 +64,7 @@ pub async fn start_wifi_task(
     while let Ok(packet) = cap.as_mut().unwrap().next_packet() {
         tokio::task::yield_now().await;
 
-        debug!("Checking packet {:?}", packet.header.len);
+        trace!("Checking packet {:?}", packet.header.len);
 
         let data = packet.data;
 
@@ -101,11 +101,11 @@ pub async fn start_wifi_task(
                         {
                             Ok((_, open_drone_id_message_pack)) => Some(open_drone_id_message_pack),
                             Err(e) => {
-                                debug!(
+                                trace!(
                                         "[action frame] Failed to parse Open Drone ID message pack: {:?}",
                                         e
                                     );
-                                debug!("data: {:?}", data);
+                                trace!("data: {:?}", data);
                                 None
                             }
                         }
