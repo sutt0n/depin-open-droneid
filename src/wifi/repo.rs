@@ -1,6 +1,7 @@
 use nom::bytes::complete::take;
+use nom::error::{context, ParseError, VerboseError};
 use nom::number::complete::{le_u16, le_u8};
-use nom::IResult;
+use nom::{IResult, InputTake};
 use radiotap::Radiotap;
 use std::convert::TryInto;
 
@@ -15,23 +16,28 @@ use super::{
 pub async fn parse_open_drone_id_message_pack(
     input: &[u8],
 ) -> IResult<&[u8], OpenDroneIDMessagePack> {
-    let (input, message_type_and_version_pack) = le_u8(input)?;
+    let (input, message_type_and_version_pack) = le_u8::<&[u8], VerboseError<&[u8]>>(input)
+        .expect("Failed to read message type and version pack");
     let message_pack_type = message_type_and_version_pack >> 4;
     let version_pack = message_type_and_version_pack & 0x0F;
 
-    let (input, single_msg_size) = le_u8(input)?;
-    let (mut input, num_messages) = le_u8(input)?;
+    let (input, single_msg_size) =
+        le_u8::<&[u8], VerboseError<&[u8]>>(input).expect("Failed to read single message size");
+    let (mut input, num_messages) =
+        le_u8::<&[u8], VerboseError<&[u8]>>(input).expect("Failed to read number of messages");
 
     let mut messages = Vec::new();
 
-    for _ in 1..=num_messages {
+    for i in 1..=num_messages {
         let new_input = input;
 
-        let (new_input, message_type_and_version) = le_u8(new_input)?;
+        let (new_input, message_type_and_version) = le_u8::<&[u8], VerboseError<&[u8]>>(new_input)
+            .expect(format!("Failed to read message type and version for message {}", i).as_str());
         let message_type = message_type_and_version >> 4;
         let version = message_type_and_version & 0x0F;
 
-        let (new_input, message_body) = take(24usize)(new_input)?;
+        let (new_input, message_body) =
+            context("Parsing 24 bytes for message body", take(24usize))(new_input)?;
 
         messages.push(OpenDroneIDMessage {
             message_type,
