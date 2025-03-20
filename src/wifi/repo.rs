@@ -1,3 +1,4 @@
+use log::debug;
 use nom::bytes::complete::take;
 use nom::error::{context, ParseError, VerboseError};
 use nom::number::complete::{le_u16, le_u8};
@@ -27,6 +28,11 @@ pub async fn parse_open_drone_id_message_pack(
         le_u8::<&[u8], VerboseError<&[u8]>>(input).expect("Failed to read number of messages");
 
     let mut messages = Vec::new();
+
+    debug!(
+        "Parsed message pack type: {}, version: {}, single_msg_size: {}",
+        message_pack_type, version_pack, single_msg_size
+    );
 
     for i in 1..=num_messages {
         let new_input = input;
