@@ -1,7 +1,8 @@
-use std::process::Command;
+use std::{process::Command, sync::Arc, time::Duration};
 
 use chrono::{DateTime, Utc};
 use log::{debug, trace};
+use tokio::{sync::Mutex, time::sleep};
 
 use super::WifiConfig;
 
@@ -10,6 +11,7 @@ pub struct WifiInterface {
     pub name: String,
     pub channel: u64,
     pub last_odid_received: Option<DateTime<Utc>>,
+    pub channel_mod_freq_ms: u64,
 }
 
 impl Default for WifiInterface {
@@ -18,6 +20,7 @@ impl Default for WifiInterface {
             name: "wlan0".to_string(),
             channel: 6,
             last_odid_received: None,
+            channel_mod_freq_ms: 1000,
         }
     }
 }
@@ -31,6 +34,7 @@ impl WifiInterface {
             name: config.device_name,
             channel: config.channels[0],
             last_odid_received: None,
+            channel_mod_freq_ms: config.channel_mod_freq_ms,
         };
 
         // Enable monitoring mode
@@ -39,12 +43,14 @@ impl WifiInterface {
         Ok(wifi_interface)
     }
 
-    pub async fn run(&mut self) -> anyhow::Result<()> {
+    pub async fn run_loop(interface: Arc<Mutex<WifiInterface>>) -> anyhow::Result<()> {
         loop {
-            // Check if the channel should be changed
-            if self.should_change_channel() {
-                self.adjust_channel();
+            let mut wifi_interface = interface.lock().await;
+            if wifi_interface.should_change_channel() {
+                wifi_interface.adjust_channel();
             }
+
+            sleep(Duration::from_millis(wifi_interface.channel_mod_freq_ms)).await;
         }
     }
 
