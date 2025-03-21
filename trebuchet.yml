@@ -4,8 +4,8 @@ app:
     device_name: wlx08beac26e3e8
     channels:
       - 1
-      - 6
-      - 11
+      - 9
+      - 12
     channel_mod_freq_ms: 5000
   bluetooth:
     device_name: hw0

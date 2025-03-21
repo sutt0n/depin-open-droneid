@@ -10,6 +10,7 @@ use super::WifiConfig;
 pub struct WifiInterface {
     pub name: String,
     pub channel: u64,
+    pub channels: Vec<u64>,
     pub last_odid_received: Option<DateTime<Utc>>,
     pub channel_mod_freq_ms: u64,
 }
@@ -18,12 +19,15 @@ impl Default for WifiInterface {
     fn default() -> Self {
         WifiInterface {
             name: "wlan0".to_string(),
+            channels: vec![1, 6, 11],
             channel: 6,
             last_odid_received: None,
             channel_mod_freq_ms: 1000,
         }
     }
 }
+
+//fn (interface *WifiInterface) init(config WifiConfig)
 
 impl WifiInterface {
     // Time in seconds to change the channel
@@ -32,6 +36,7 @@ impl WifiInterface {
     pub async fn init(config: WifiConfig) -> anyhow::Result<Self> {
         let wifi_interface = WifiInterface {
             name: config.device_name,
+            channels: config.channels.clone(),
             channel: config.channels[0],
             last_odid_received: None,
             channel_mod_freq_ms: config.channel_mod_freq_ms,
@@ -85,15 +90,30 @@ impl WifiInterface {
     }
 
     pub fn adjust_channel(&mut self) {
-        match self.channel {
-            // 2.4 GHz channels
-            1 => self.channel = 6,
-            6 => self.channel = 9,
-            9 => self.channel = 11,
-            11 => self.channel = 1,
-            // 5 GHz channels
-            _ => self.channel = 6,
-        }
+        let num_channels = self.channels.len();
+        let max_idx = num_channels - 1;
+
+        let current_idx = self
+            .channels
+            .iter()
+            .position(|channel| *channel == self.channel)
+            .unwrap();
+
+        self.channel = if current_idx == max_idx {
+            *self.channels.get(0).unwrap()
+        } else {
+            *self.channels.iter().next().unwrap()
+        };
+
+        //match self.channel {
+        //    // 2.4 GHz channels
+        //    1 => self.channel = 6,
+        //    6 => self.channel = 9,
+        //    9 => self.channel = 11,
+        //    11 => self.channel = 1,
+        //    // 5 GHz channels
+        //    _ => self.channel = 6,
+        //}
 
         debug!("Adjusting channel to {}", self.channel);
 
