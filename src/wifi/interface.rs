@@ -104,6 +104,7 @@ impl WifiInterface {
         self.channel = if current_idx == max_idx {
             *self.channels.get(0).unwrap()
         } else {
+            //*self.channel.iter().next().unwrap()
             *self.channels.get(current_idx + 1).unwrap()
         };
 
@@ -180,5 +181,9 @@ pub mod test {
         interface.adjust_channel();
 
         assert_eq!(interface.channel, 11);
+
+        interface.adjust_channel();
+
+        assert_eq!(interface.channel, 1);
     }
 }
