@@ -99,10 +99,12 @@ impl WifiInterface {
             .position(|channel| *channel == self.channel)
             .unwrap();
 
+        println!("current idx {} max idx {}", current_idx, max_idx);
+
         self.channel = if current_idx == max_idx {
             *self.channels.get(0).unwrap()
         } else {
-            *self.channels.iter().next().unwrap()
+            *self.channels.get(current_idx + 1).unwrap()
         };
 
         //match self.channel {
@@ -157,4 +159,26 @@ pub fn enable_monitor_mode(device: &str) -> Result<(), String> {
         .expect("failed to execute process");
 
     Ok(())
+}
+
+#[cfg(test)]
+pub mod test {
+    use super::WifiInterface;
+
+    #[test]
+    fn test_device_switcheroo() {
+        let mut interface = WifiInterface {
+            name: "wlan0".to_string(),
+            channels: vec![1, 6, 11],
+            channel: 6,
+            last_odid_received: None,
+            channel_mod_freq_ms: 1000,
+        };
+
+        assert_eq!(interface.channel, 6);
+
+        interface.adjust_channel();
+
+        assert_eq!(interface.channel, 11);
+    }
 }
